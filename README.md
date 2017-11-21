@@ -1,2 +1,7 @@
-# snowbot
+# SnowBot
+
+> You know nothing, Jon Snow
+
 A chat bot that knows nothing
+
+- [Documentation](doc)
