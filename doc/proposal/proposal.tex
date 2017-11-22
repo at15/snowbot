@@ -1,0 +1,69 @@
+\documentclass[11pt,letterpaper,twocolumn,oneside]{article}
+\usepackage[letterpaper]{geometry}
+\geometry{left=1.8cm, top=1.0cm, right=1.8cm, bottom=2.0cm, footskip=.5cm}
+% FIXME: the font is really strange
+% \usepackage[T1]{fontenc}
+% https://tex.stackexchange.com/questions/39227/no-indent-in-the-first-paragraph-in-a-section
+\usepackage{indentfirst}
+% \setlength\parindent{0pt}
+
+\usepackage{enumitem}
+
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amsthm}
+\usepackage{mathtools}
+\DeclarePairedDelimiter{\ceil}{\lceil}{\rceil}
+\DeclarePairedDelimiter{\floor}{\lfloor}{\rfloor}
+\usepackage{amssymb}
+
+\usepackage{algorithm}
+\usepackage{algorithmicx}
+\usepackage{algpseudocode}
+
+% http://tex.stackexchange.com/a/230427/114385
+\usepackage{hyperref}
+
+\usepackage{graphicx}
+\graphicspath{ {images/} }
+
+\usepackage[backend=biber]{biblatex}
+\addbibresource{proposal.bib}
+
+\usepackage{sectsty}
+\sectionfont{\fontsize{12}{15}\selectfont}
+
+\begin{document}
+
+% from http://latex.org/forum/viewtopic.php?f=5&t=3032
+\twocolumn[%
+%  Title and authors
+  \begin{center}
+    {\large An empirical study of machine learning frameworks for building chatbot in cloud} \\
+     \vspace{2ex}
+     CMPS242 course project proposal Pinglei Guo et al.
+  \end{center}
+]
+
+\section{Abstract}
+
+Machine learning frameworks is now a new competing spot for tech giants,
+especially cloud service providers with GPU or TPU\footnote{https://cloud.google.com/tpu/} support.
+Main stream frameworks are all backed by companies,
+Google created tensorflow, Amazon chose MXNet, Facebook created PyTorch and Microsoft built CNTK.
+Though they are working on open format neural network format ONNX\footnote{http://onnx.ai/},
+the cost of implementing and running same model using different framework on different cloud still varies.
+
+We chose to build a chatbot using seq2seq in the experiment,
+though it's hard to evaluate performance of a dialogue system\cite{liu2016not}.
+It's close related to previous course projects and our main goal is to explore different frameworks
+instead of reach good score in a well defined problem.
+Also we plan to use it as a base for building a personal knowledge manage assistant in the future.
+
+\section{Design}
+
+This design
+
+\printbibliography
+
+\end{document}
