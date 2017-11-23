@@ -62,32 +62,94 @@ Also we plan to use it as a base for building a personal knowledge manage assist
 
 \section{Background}
 
+\subsection{ChatBot}
+
 Chatbot can be generally divided into two types,
-one that answers randomly, or use single answer for almost everything.
-Jokes aside, most bot that being used in real life are normally restricted to a very specific domain,
-and requires a lot of heuristic rules, in which case a good knowledge base is more important than the learner.
-Like booking a plane ticket, providing bus schedule.
-Though kind of restricted, as long as you have the data and the problem well defined,
-they won't come up with random answers that makes human user confuse, because the answer
-is picked or trained from existing conversations and human interacting with those bot
-know their purpose before they start chatting.
+open domain and close domain. The first one can answer a wide range of question
+like a real human while the latter is limited to specific area, like booking tickets,
+which has more applications in real world.
+Also in terms of data used to train bots, and how the bot generate response,
+one can rely on existing conversations, and let bot pick answers from existing corpus
+based on conversation context, or generate response from scratch.
+We chose to build close domain model using a retrieval approach because it's easier.
 
-However, sometimes human don't have a exact purpose when talk to a bot, they many not know the exact question at all.
-Take StackOverflow for example, a lot of question are asked because the
-OP does not how to look at their error message to find the exact problem and google it.
-The ability to narrow down a program requires a lot of experience in certain field,
-it might takes a human decades to become an expert, because human can't scale out.
-Working 24h a day can only decrease productivity if not killing the man, and adding
-more man can't increase it as well because human can't share their mind directly like computer share bits.
-Also human are much harder to schedule.
+\subsection{Model}
 
-Thus a open domain (or semi-open domain) bot is much useful, it can help people
-discover things they didn't know instead of just save some typing.
+Since we have used RNN with LSTM in previous text classification assignment,
+it's straight forward for use to try it for building a chat bot.
+Instead of many to one (sequence to label), now we want sequence to sequence \cite{sutskever2014sequence},
+which is quite like translate, except the response is in same language with different meaning
+instead of different language with same meaning.
 
+\subsection{Framework}
+
+We have used tensorflow \cite{abadi2016tensorflow} in previous assignments, it is much more convenient
+compared to write differentiate by hand and do the back propagate manually.
+However, the programming model in tensorflow is more declarative, the python
+code simply construct a graph and what tensorflow use is the graph, you can't
+add a print statement to print out a shape of a tensor at runtime, unless you
+make a extra operation for print and add it to the graph (tf.Print),
+which sacrifice programmers' productivity for optimization (graph definition are much
+easier to optimize compared with imperative programs).
+
+Frameworks like MXNet \cite{chen2015mxnet} tackled this issue in a mixed manner,
+while it allows user to write imperative code, it still construct graph and only
+optimize the critical path. It also have a higher level API called Gluon.
+
+Further more, an open exchange format for neural network is proposed \footnote{http://onnx.ai/},
+it would be interesting to see what would happens when put a model trained on tesnorflow on MXNet.
 
 \section{Experiment Design}
 
+There are mainly three things we want to observe in the experiment
+
+\begin{itemize}
+  \item the difficulty of implementing same well defined model in different frameworks (Tensorflow, MXNet, PyTorch)
+  \item the cost of running different frameworks on different cloud, time, money and the efforts for provisioning
+  \item distributed training on larger dataset
+\end{itemize}
+
+We plan to use three size of corpus for the experiment
+
+\begin{itemize}
+  \item Cornell Movie Dialog Corpus 50MB \cite{Danescu-Niculescu-Mizil+Lee:11a}
+  \item Ubuntu Dialogue Corpus 1GB \cite{lowe2015ubuntu}
+  \item Reddit Comments \footnote{https://www.reddit.com/r/datasets/comments/3bxlg7/i\_have\_every\_publicly\_available\_reddit\_comment}
+  or Stackoverflow archive 1TB \footnote{https://archive.org/details/stackexchange}
+\end{itemize}
+
+We will start from the smallest dataset, and move to the bigger one, since
+we have many frameworks to use, the work can be distributed to team members and
+executed in parallel, some preprocessing code is framework agnostic and can be reused.
+It would be better if we can abstract common interface, but we would be reinventing
+things like Keras \footnote{https://keras.io/}, which is impossible for a 3 weeks project.
+
+As for cloud service providers, we will be using GCP and AWS for larger corpus,
+since the data can no longer be fit on local disk, and the training will take a long time.
+GCP has TPU, which is not available on other platforms.
+
+\section{Technical Challenges}
+
+Since we are no longer dealing with tiny dataset, performance is becoming a problem.
+Especially pre processing text, python, though convenient, is really slow, one way
+to solve it is to store pre processed corpus into numeric format and load it directly.
+However, this could still be very slow, due to throughput limit of disk.
+We might considering use other language and store result in memory to speed up this process if there is time for doing so.
+
+Also for distributed training, we need to figure out the part that can be run in parallel.
+There are two types, data parallelism and model parallelism.
+Also if we are using different models, (words based LSTM, character based LSTM),
+we can simply run it on different machines instead of run them one by one.
+
 \section{Schedule}
+
+\begin{itemize}
+  \item 11.26 Have Tensorflow code on Cornell Movie Dialog Corpus running
+  \item 11.30 Have MXNet and PyTorch with Cornell Dialog Corpus, Tensorflow with Reddit Comments
+  \item 12.05 A Web UI (Flask + Angular) for playing with the bot online
+  \item 12.08 Tensorflow and MXNet with larger corpus
+  \item 12.12 Wrap up and final report
+\end{itemize}
 
 \printbibliography
 
