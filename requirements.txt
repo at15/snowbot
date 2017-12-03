@@ -1,0 +1,17 @@
+bleach==1.5.0
+certifi==2017.11.5
+chardet==3.0.4
+enum34==1.1.6
+html5lib==0.9999999
+idna==2.6
+Markdown==2.6.9
+numpy==1.13.3
+protobuf==3.5.0.post1
+requests==2.18.4
+six==1.11.0
+slackclient==1.1.0
+tensorflow-gpu==1.4.0
+tensorflow-tensorboard==0.4.0rc3
+urllib3==1.22
+websocket-client==0.44.0
+Werkzeug==0.12.2
