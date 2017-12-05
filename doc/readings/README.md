@@ -74,4 +74,25 @@ decoder_inputs shifted to left by one time step with an end-of-sentence tag appe
   - [ ] NOTE: invariant to batch_size, have difference in hyper parameter tuning
 - gradient computation & optimization
   - clip gradients `tf.clip_by_global_norm`, (not just one line call to AdamOptimizer)
-  -
+  - update_step = optimizer.apply_gradients(zip(clipped_gradients, params))
+  - use standard SGD got better performance
+- inference (test) - how to generate translation
+  - decoding includes, greedy, sampling, beam search (talk about greedy in the example)
+  - encoder encode source (same as training) and pass the last state to decoder
+  - decoding start when get `<s>` (tgt_sos_id)
+  - treat RNN output as a set of logits, and pick the most likely one (vocab[argmax(logits)]), feed this word as input for next timestep
+  - continues until `</s>` (tgt_eos_id) is produced
+  - use `GreedyEmbeddingHelper` instead of `TrainingHelper` 
+    - [ ] TODO: so the greedy part happend in embedding?
+  - `maximum_iterations=tf.round(tf.reduce_max(source_sequence_length) * 2)`, limit target length to twice of source
+    - [ ] TODO: why `reduce_max`
+- attenion
+  - establish direct shortcut between target and source by paying 'attention' to relevant source content as we translate
+  - can be visualized
+  - instead of just passing the last hidden state from source to decoder, allow decoder to peek at source
+  - [ ] TODO: skipped the rest ... (may read it again later ...)
+- tip and tricks
+  - use three graphs, for train, eval and test, the communicate via saving and restoring models
+  - `tf.data` API using iterator
+    - also has bucketing
+  - beam search
