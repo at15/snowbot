@@ -3,6 +3,10 @@
 import os
 import click
 
+import pandas as pd
+import numpy as np
+from sklearn.model_selection import train_test_split
+
 NAME = 'cornell'
 FULL_NAME = 'Cornell Movie Dialog Corpus'
 URL = 'https://www.cs.cornell.edu/~cristian/Cornell_Movie-Dialogs_Corpus.html'
@@ -28,6 +32,7 @@ def to_csv(src, dst, columns, array_col=-1, escape_col=-1):
     :param escape_col: int
     :return:
     """
+    print('convert', src, 'to', dst)
     n_cols = len(columns)
     lines = []
     with open(src, 'r', errors='ignore') as f:
@@ -53,8 +58,56 @@ def to_csv(src, dst, columns, array_col=-1, escape_col=-1):
             f.write(l)
 
 
+def get_id2line(csv_file):
+    df = pd.read_csv(csv_file)
+    id2line = {}
+    for line_id, line in zip(df['id'], df['utterance']):
+        id2line[line_id] = line
+    return id2line
+
+
+def get_conversations(csv_file):
+    df = pd.read_csv(csv_file)
+    convs = []
+    for conv in df['lines']:
+        # str 'L1'; 'L2' -> list [L1, L2]
+        convs.append([l.strip()[1:-1] for l in conv.split(';')])
+    return convs
+
+
+def get_qa(prefix='processed/cornell/'):
+    convs = get_conversations(prefix + 'movie_conversations.csv')
+    id2line = get_id2line(prefix + 'movie_lines.csv')
+    questions, answers = [], []
+    for conv in convs:
+        for i in range(len(conv) - 1):
+            questions.append(id2line[conv[i]])
+            answers.append(id2line[conv[i + 1]])
+    assert len(questions) == len(answers)
+    return questions, answers
+
+
+@click.command('convert')
+def convert():
+    dst_prefix = 'processed/cornell/'
+    questions, answers = get_qa()
+    for i in range(6):
+        print('Q:', questions[i])
+        print('A:', answers[i], '\n')
+    # TODO: it could be better to split test and train based on conversation id instead of qa id
+    # FIXME: can't use train_test_split ... got float ...
+    train_enc, test_enc, train_dec, test_dec = train_test_split(questions, answers, test_size=0.1)
+    print(len(train_enc), len(train_dec), len(test_enc), len(test_dec))
+    for name, data in zip(['train_enc.txt', 'train_dec.txt', 'test_enc.txt', 'test_dec.txt'],
+                          [train_enc, train_dec, test_enc, test_dec]):
+        print('write to', name)
+        with open(dst_prefix + name, 'w') as f:
+            f.write('\n'.join(data))
+    print('done')
+
+
 @click.command('csv')
-def all_to_csv():
+def txt_to_csv():
     raw_prefix = 'raw/cornell/'
     csv_prefix = 'processed/cornell/'
     if not os.path.exists(raw_prefix):
@@ -91,5 +144,6 @@ def cli():
 
 
 if __name__ == '__main__':
-    cli.add_command(all_to_csv)
+    cli.add_command(txt_to_csv)
+    cli.add_command(convert)
     cli()
