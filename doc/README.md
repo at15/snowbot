@@ -14,7 +14,7 @@ Update
 
 After Update
 
-- `pip freez > requirements.txt`
+- `pip freeze > requirements.txt`
 
 Restore
 
