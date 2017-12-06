@@ -14,7 +14,6 @@ DATA_URL = 'http://www.cs.cornell.edu/~cristian/data/cornell_movie_dialogs_corpu
 
 _SEP = '+++$+++'
 
-
 def to_csv(src, dst, columns, array_col=-1, escape_col=-1):
     """Convert the original Cornell Movie Dialog corpus to csv because pandas can't load it directly
 
@@ -60,6 +59,7 @@ def to_csv(src, dst, columns, array_col=-1, escape_col=-1):
 
 def get_id2line(csv_file):
     df = pd.read_csv(csv_file)
+    df = df.fillna('')
     id2line = {}
     for line_id, line in zip(df['id'], df['utterance']):
         id2line[line_id] = line
@@ -113,6 +113,7 @@ def convert():
                           [train_enc, train_dec, test_enc, test_dec]):
         print('write to', name)
         print(len(data))
+        print(data[10698])
         print(data[10699], type(data[10699])) # it's nan, float ... where we got it?
         with open(dst_prefix + name, 'w') as f:
             f.write('\n'.join(data))
