@@ -79,11 +79,16 @@ def get_qa(prefix='processed/cornell/'):
     convs = get_conversations(prefix + 'movie_conversations.csv')
     id2line = get_id2line(prefix + 'movie_lines.csv')
     questions, answers = [], []
+    n_empty = 0
     for conv in convs:
         for i in range(len(conv) - 1):
+            if not id2line[conv[i]] or not id2line[conv[i+1]]:
+                n_empty += 1
+                continue
             questions.append(id2line[conv[i]])
             answers.append(id2line[conv[i + 1]])
     assert len(questions) == len(answers)
+    print('skipped', n_empty, 'conversations w/ empty q/a')
     return questions, answers
 
 
@@ -97,8 +102,7 @@ def convert():
     # TODO: it could be better to split test and train based on conversation id instead of qa id
     test_ratio = 0.1
     total = len(questions)
-    # ids = np.random.permutation(total)
-    ids = np.arange(total)
+    ids = np.random.permutation(total)
     test_ids, train_ids = ids[0:int(test_ratio * total)], ids[int(test_ratio * total):]
     print('test ids', len(test_ids))
     train_enc, test_enc, train_dec, test_dec = [], [], [], []
@@ -112,9 +116,6 @@ def convert():
     for name, data in zip(['train_enc.txt', 'train_dec.txt', 'test_enc.txt', 'test_dec.txt'],
                           [train_enc, train_dec, test_enc, test_dec]):
         print('write to', name)
-        print(len(data))
-        print(data[10698])
-        print(data[10699], type(data[10699])) # it's nan, float ... where we got it?
         with open(dst_prefix + name, 'w') as f:
             f.write('\n'.join(data))
     print('done')
