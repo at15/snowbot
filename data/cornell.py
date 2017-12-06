@@ -95,12 +95,25 @@ def convert():
         print('Q:', questions[i])
         print('A:', answers[i], '\n')
     # TODO: it could be better to split test and train based on conversation id instead of qa id
-    # FIXME: can't use train_test_split ... got float ...
-    train_enc, test_enc, train_dec, test_dec = train_test_split(questions, answers, test_size=0.1)
+    test_ratio = 0.1
+    total = len(questions)
+    # ids = np.random.permutation(total)
+    ids = np.arange(total)
+    test_ids, train_ids = ids[0:int(test_ratio * total)], ids[int(test_ratio * total):]
+    print('test ids', len(test_ids))
+    train_enc, test_enc, train_dec, test_dec = [], [], [], []
+    for i in train_ids:
+        train_enc.append(questions[i])
+        train_dec.append(answers[i])
+    for i in test_ids:
+        test_enc.append(questions[i])
+        test_dec.append(answers[i])
     print(len(train_enc), len(train_dec), len(test_enc), len(test_dec))
     for name, data in zip(['train_enc.txt', 'train_dec.txt', 'test_enc.txt', 'test_dec.txt'],
                           [train_enc, train_dec, test_enc, test_dec]):
         print('write to', name)
+        print(len(data))
+        print(data[10699], type(data[10699])) # it's nan, float ... where we got it?
         with open(dst_prefix + name, 'w') as f:
             f.write('\n'.join(data))
     print('done')
