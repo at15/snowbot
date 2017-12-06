@@ -14,12 +14,13 @@ def cli(dataset):
     dataset = dataset.lower()
     if dataset == cornell.NAME:
         # TODO: maybe add a force remove folder
-        if os.path.exists('cornell'):
+        dst = 'raw/cornell'
+        if os.path.exists(dst):
             print('extracted cornell data already exist')
             return
-        file = util.maybe_download(cornell.DATA_URL, download_dir='.')
+        file = util.maybe_download(cornell.DATA_URL, download_dir='raw')
         util.maybe_extract(file, 'cornell-tmp')
-        shutil.move('cornell-tmp/cornell movie-dialogs corpus', 'cornell')
+        shutil.move('cornell-tmp/cornell movie-dialogs corpus', dst)
         shutil.rmtree('cornell-tmp', ignore_errors=True)
     else:
         print('unknown dataset', dataset)
