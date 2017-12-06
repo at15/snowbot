@@ -4,8 +4,8 @@ import os
 import shutil
 import click
 
-from .util import maybe_extract, maybe_download
-from .cornell import NAME as C_NAME, DATA_URL as C_DURL
+from util import maybe_extract, maybe_download
+from cornell import NAME as C_NAME, DATA_URL as C_DURL
 
 
 @click.command()
