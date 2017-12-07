@@ -1,4 +1,9 @@
-from snowbot.corpus.cornell.dataset import NAME, FULL_NAME, URL, DATA_URL
+from snowbot.corpus.cornell.dataset import NAME, FULL_NAME, URL, DATA_URL, download
+
+__all__ = [
+    'META',
+    'download'
+]
 
 META = {
     'name': NAME,

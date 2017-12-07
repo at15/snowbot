@@ -1,7 +1,9 @@
+import os
 import click
 
 from snowbot.corpus import METAS
 from snowbot.corpus.util import maybe_download, maybe_extract
+from snowbot.corpus.cornell import download as cdl
 
 
 @click.command('download', help='Download and extract corpus to ./data')
@@ -12,6 +14,12 @@ def download(name):
         print('unknown corpus', name, 'use list command to see all supported')
         return
     # TODO: real download logic
+    # FIXME: this hack only works for cornell
+    if name == 'cornell':
+        if os.path.exists('data/cornell'):
+            print('extracted cornell data already exist')
+            return
+        cdl('data/cornell', 'data/tmp')
 
 
 @click.command('list', help='Show known Corpus that can be downloaded')
