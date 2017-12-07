@@ -12,12 +12,15 @@ def corpus_must_exists(name):
         exit(1)
 
 
-@click.command('convert', help='Convert raw data to format like csv')
-@click.argument('name')
-def convert(name):
-    corpus_must_exists(name)
-    corpus = CORPUS[name](home='data/' + name)
-    corpus.convert()
+def print_corpus():
+    print('Name\t Description\tURL')
+    for name, m in CORPUS.items():
+        print(name, m.NAME, m.URL)
+
+
+@click.command('list', help='Show known Corpus that can be downloaded')
+def lst():
+    print_corpus()
 
 
 @click.command('download', help='Download and extract corpus to ./data')
@@ -32,15 +35,20 @@ def download(name):
     corpus.download_and_extract(extract_folder)
 
 
-def print_corpus():
-    print('Name\t Description\tURL')
-    for name, m in CORPUS.items():
-        print(name, m.NAME, m.URL)
+@click.command('convert', help='Convert raw data to format like csv')
+@click.argument('name')
+def convert(name):
+    corpus_must_exists(name)
+    corpus = CORPUS[name](home='data/' + name)
+    corpus.convert()
 
 
-@click.command('list', help='Show known Corpus that can be downloaded')
-def lst():
-    print_corpus()
+@click.command('gen_qa', help='generate one turn dialog (QA)')
+@click.argument('name')
+def gen_qa(name):
+    corpus_must_exists(name)
+    corpus = CORPUS[name](home='data/' + name)
+    corpus.gen_qa()
 
 
 # TODO: maybe_download does not handle nor return error
@@ -71,6 +79,7 @@ if __name__ == '__main__':
     cli.add_command(lst)
     cli.add_command(download)
     cli.add_command(convert)
+    cli.add_command(gen_qa)
     cli.add_command(download_file)
     cli.add_command(extract_file)
     cli()

@@ -1,5 +1,6 @@
 import os
 import shutil
+import pandas as pd
 
 from snowbot.corpus.util import maybe_download, maybe_extract, files_exist, files_missing
 
@@ -37,6 +38,7 @@ class CornellDataSet:
     def convert(self):
         if not files_exist(self.home, self.FILES):
             print('following files are missing', files_missing(self.home, self.FILES))
+            return False
         files = {
             'movie_titles_metadata': {
                 'cols': ['id', 'title', 'year', 'imdb_rating', 'imdb_votes', 'genres'],
@@ -60,6 +62,31 @@ class CornellDataSet:
             array_col, escape_col = m.get('array_col', -1), m.get('escape_col', -1)
             text2csv(os.path.join(self.home, f + '.txt'), os.path.join(self.home, f + '.csv'),
                      m['cols'], array_col, escape_col)
+        return True
+
+    def gen_qa(self):
+        conversations = get_conversations(os.path.join(self.home, 'movie_conversations.csv'))
+        id2line = get_id2line(os.path.join(self.home, 'movie_lines.csv'))
+        questions, answers, n_empty = [], [], 0
+        for conv in conversations:
+            for i in range(len(conv) - 1):
+                if not id2line[conv[i]] or not id2line[conv[i + 1]]:
+                    n_empty += 1
+                    continue
+                questions.append(id2line[conv[i]])
+                answers.append(id2line[conv[i + 1]])
+        if len(questions) != len(answers):
+            print('got {} questions but {} answers'.format(len(questions), len(answers)))
+            return False
+        print('total {} conversations, transformed to {} qa, skipped {} empty'.format(
+            len(conversations), len(questions), n_empty))
+        q, a = os.path.join(self.home, 'q.txt'), os.path.join(self.home, 'a.txt')
+        print('save questions and answers to', q, a)
+        with open(q, 'w') as f:
+            f.write('\n'.join(questions))
+        with open(a, 'w') as f:
+            f.write('\n'.join(answers))
+        return True
 
 
 def text2csv(src, dst, columns, array_col=-1, escape_col=-1):
@@ -106,3 +133,22 @@ def text2csv(src, dst, columns, array_col=-1, escape_col=-1):
         f.write(','.join(columns) + '\n')
         for l in lines:
             f.write(l)
+
+
+def get_conversations(movie_conversations_csv):
+    df = pd.read_csv(movie_conversations_csv)
+    conversations = []
+    for conversation in df['lines']:
+        # str 'L1'; 'L2' -> list [L1, L2]
+        conversations.append([l.strip()[1:-1] for l in conversation.split(';')])
+    return conversations
+
+
+def get_id2line(movie_lines_csv):
+    df = pd.read_csv(movie_lines_csv)
+    # NOTE: pandas treat empty string column as NaN, which is float, cause error when ','.join(lines)
+    df = df.fillna('')
+    id2line = {}
+    for line_id, line in zip(df['id'], df['utterance']):
+        id2line[line_id] = line
+    return id2line
