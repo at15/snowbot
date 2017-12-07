@@ -24,6 +24,22 @@ def convert_size(size_bytes):
     return '{} {}'.format(s, size_name[i])
 
 
+def files_exist(folder, files):
+    for f in files:
+        if not os.path.exists(os.path.join(folder, f)):
+            return False
+    return True
+
+
+def files_missing(folder, files):
+    missing = []
+    for f in files:
+        p = os.path.join(folder, f)
+        if not os.path.exists(p):
+            missing.append(p)
+    return missing
+
+
 def maybe_download(url, download_dir, silent=False, progress=True):
     def p(*args):
         if not silent:

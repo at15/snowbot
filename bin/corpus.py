@@ -5,19 +5,30 @@ from snowbot.corpus import CORPUS
 from snowbot.corpus.util import maybe_download, maybe_extract
 
 
-@click.command('download', help='Download and extract corpus to ./data')
-@click.argument('name')
-def download(name):
+def corpus_must_exists(name):
     if name not in CORPUS:
         print('unknown corpus', name, 'following is all supported')
         print_corpus()
-        return
+        exit(1)
 
+
+@click.command('convert', help='Convert raw data to format like csv')
+@click.argument('name')
+def convert(name):
+    corpus_must_exists(name)
+    corpus = CORPUS[name](home='data/' + name)
+    corpus.convert()
+
+
+@click.command('download', help='Download and extract corpus to ./data')
+@click.argument('name')
+def download(name):
+    corpus_must_exists(name)
     extract_folder = 'data/' + name
     if os.path.exists(extract_folder):
         print('extracted data already exist in', extract_folder)
         return
-    corpus = CORPUS[name]()
+    corpus = CORPUS[name](home=extract_folder)
     corpus.download_and_extract(extract_folder)
 
 
@@ -57,8 +68,9 @@ def cli():
 
 
 if __name__ == '__main__':
-    cli.add_command(download)
     cli.add_command(lst)
+    cli.add_command(download)
+    cli.add_command(convert)
     cli.add_command(download_file)
     cli.add_command(extract_file)
     cli()
