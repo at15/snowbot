@@ -2,7 +2,7 @@ import os
 import shutil
 import pandas as pd
 
-from snowbot.corpus.util import maybe_download, maybe_extract, files_exist, files_missing
+from snowbot.corpus.util import maybe_download, maybe_extract, files_exist, files_missing, train_test_split
 
 _SEP = '+++$+++'
 
@@ -86,7 +86,20 @@ class CornellDataSet:
             f.write('\n'.join(questions))
         with open(a, 'w') as f:
             f.write('\n'.join(answers))
+        # FIXME: move to split
+        d = train_test_split(questions, answers, 0.1)
+        m = {
+            'src-train.txt': 'train_enc',
+            'tgt-train.txt': 'train_dec',
+            'src-val.txt': 'test_enc',
+            'tgt-val.txt': 'test_dec'
+        }
+        for dst, src in m.items():
+            with open(os.path.join(self.home, dst), 'w') as f:
+                f.write('\n'.join(d[src]))
         return True
+
+    # def split(self):
 
 
 def text2csv(src, dst, columns, array_col=-1, escape_col=-1):

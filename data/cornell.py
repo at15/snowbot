@@ -102,14 +102,3 @@ def split():
 def tokenize():
     src_prefix = 'processed/cornell/'
     dst_prefix = src_prefix
-
-
-@click.group()
-def cli():
-    pass
-
-
-if __name__ == '__main__':
-    cli.add_command(txt_to_csv)
-    cli.add_command(split)
-    cli()

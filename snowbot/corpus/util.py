@@ -5,6 +5,8 @@ import tarfile
 import zipfile
 import click
 
+import numpy as np
+
 FOO = 'foo'
 
 
@@ -93,3 +95,28 @@ def maybe_extract(file, folder, silent=False):
         return False
     p('file extracted to', folder)
     return True
+
+
+def train_test_split(questions, answers, test_ratio, sample=1, shuffle=True):
+    assert 0 < test_ratio < 1
+    assert 0 < sample <= 1
+    assert len(questions) == len(answers)
+    total = int(len(questions) * sample)
+    if shuffle:
+        ids = np.random.permutation(total)
+    else:
+        ids = np.arange(total)
+    test_ids, train_ids = ids[0:int(test_ratio * total)], ids[int(test_ratio * total):]
+    train_enc, test_enc, train_dec, test_dec = [], [], [], []
+    for i in train_ids:
+        train_enc.append(questions[i])
+        train_dec.append(answers[i])
+    for i in test_ids:
+        test_enc.append(questions[i])
+        test_dec.append(answers[i])
+    return {
+        'train_enc': train_enc,
+        'train_dec': train_dec,
+        'test_enc': test_enc,
+        'test_dec': test_dec
+    }
