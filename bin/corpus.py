@@ -1,32 +1,35 @@
 import os
 import click
 
-from snowbot.corpus import METAS
+from snowbot.corpus import CORPUS
 from snowbot.corpus.util import maybe_download, maybe_extract
-from snowbot.corpus.cornell import download as cdl
 
 
 @click.command('download', help='Download and extract corpus to ./data')
 @click.argument('name')
 def download(name):
-    if name not in METAS:
-        # TODO: print all we have
-        print('unknown corpus', name, 'use list command to see all supported')
+    if name not in CORPUS:
+        print('unknown corpus', name, 'following is all supported')
+        print_corpus()
         return
-    # TODO: real download logic
-    # FIXME: this hack only works for cornell
-    if name == 'cornell':
-        if os.path.exists('data/cornell'):
-            print('extracted cornell data already exist')
-            return
-        cdl('data/cornell', 'data/tmp')
+
+    extract_folder = 'data/' + name
+    if os.path.exists(extract_folder):
+        print('extracted data already exist in', extract_folder)
+        return
+    corpus = CORPUS[name]()
+    corpus.download_and_extract(extract_folder)
+
+
+def print_corpus():
+    print('Name\t Description\tURL')
+    for name, m in CORPUS.items():
+        print(name, m.NAME, m.URL)
 
 
 @click.command('list', help='Show known Corpus that can be downloaded')
 def lst():
-    print('Name\t Description\tURL')
-    for name, m in METAS.items():
-        print(name, m['full_name'], m['url'])
+    print_corpus()
 
 
 # TODO: maybe_download does not handle nor return error

@@ -1,5 +1,5 @@
-import snowbot.corpus.cornell
+from snowbot.corpus.cornell import CornellDataSet
 
-METAS = {
-    'cornell': cornell.META
+CORPUS = {
+    'cornell': CornellDataSet
 }
