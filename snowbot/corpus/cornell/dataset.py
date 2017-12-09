@@ -92,11 +92,13 @@ class CornellDataSet:
         # TODO: allow split when gen qa?
         return True
 
-    def split(self, q='q.txt', a='a.txt'):
+    def split(self, q='q.txt', a='a.txt', remove_stupid=True):
         with open(os.path.join(self.home, q), 'r') as f:
             questions = f.read().splitlines()
         with open(os.path.join(self.home, a), 'r') as f:
             answers = f.read().splitlines()
+        if remove_stupid:
+            questions, answers = remove_stupid_qa(questions, answers)
         return self._split(questions, answers)
 
     def _split(self, questions, answers):
@@ -194,6 +196,34 @@ def count_stupid_lines(lines):
         if 'no' in cleaned:
             n_no += 1
     print('stupid lines: n_idk', n_idk, 'n_yeah', n_yeah, 'n_no', n_no)
+
+
+def remove_stupid_qa(questions, answers):
+    assert len(questions) == len(answers)
+    cleaner = re.compile('(<u>|</u>|\[|\])')
+    q_clever = []
+    a_clever = []
+    n_stupid = 0
+    for i in range(len(questions)):
+        q = cleaner.sub('', questions[i]).lower()
+        a = cleaner.sub('', answers[i]).lower()
+        if is_stupid(q) or is_stupid(a):
+            n_stupid += 1
+            continue
+        q_clever.append(q)
+        a_clever.append(a)
+    assert len(q_clever) == len(a_clever)
+    print('n_stupid', n_stupid)
+    return q_clever, a_clever
+
+
+def is_stupid(line):
+    if len(line) < 15 and ('don\'t' in line) and ('know' in line):
+        return True
+    if len(line) < 5:
+        if ('yeah' in line) or ('yes' in line) or ('no' in line):
+            return True
+    return False
 
 
 def batch_tokenizer(lines):
