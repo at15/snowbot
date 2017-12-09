@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
-# TODO: it seems I lost the old bash .... forgot to commit?
-D_HOME=/home/at15/workspace/src/github.com/at15/snowbot/data/cornell/
-M_HOME=/home/at15/workspace/src/github.com/at15/snowbot/model/mxnet_sockeye
+D_HOME=/home/at15/workspace/src/github.com/at15/snowbot-data/cornell/
+M_HOME=/home/at15/workspace/src/github.com/at15/snowbot-model/mxnet_sockeye
 
 python -m sockeye.train --source ${D_HOME}src-train.txt \
                        --target ${D_HOME}tgt-train.txt \
@@ -11,4 +10,4 @@ python -m sockeye.train --source ${D_HOME}src-train.txt \
                        --rnn-num-hidden 256 \
                        --output ${M_HOME}
 
-# python -m sockeye.translate --models /home/at15/workspace/src/github.com/at15/snowbot/model/mxnet_sockeye
+# python -m sockeye.translate --models /home/at15/workspace/src/github.com/at15/snowbot-model/mxnet_sockeye
