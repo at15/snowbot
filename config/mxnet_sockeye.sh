@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
 
-D_HOME=/home/at15/workspace/src/github.com/at15/snowbot-data/cornell/
-M_HOME=/home/at15/workspace/src/github.com/at15/snowbot-model/mxnet_sockeye
+#D_HOME=/home/at15/workspace/src/github.com/at15/snowbot-data/cornell/
+D_HOME=/home/at15/workspace/src/github.com/at15/snowbot-data/twitter/
+#M_HOME=/home/at15/workspace/src/github.com/at15/snowbot-model/mxnet_sockeye
+M_HOME=/home/at15/workspace/src/github.com/at15/snowbot-model/mxnet_sockeye_twitter_1209_01
 
 python -m sockeye.train --source ${D_HOME}src-train.txt \
                        --target ${D_HOME}tgt-train.txt \
