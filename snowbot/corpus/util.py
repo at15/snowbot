@@ -3,6 +3,8 @@ import math
 import requests
 import tarfile
 import zipfile
+import gzip
+import shutil
 import click
 
 import numpy as np
@@ -84,6 +86,19 @@ def maybe_extract(file, folder, silent=False):
     if not folder:
         p('extract destination not specified')
         return False
+    # gz is single file, not folder
+    if file.endswith('.gz'):
+        dst_file = os.path.join(folder, file.split('/')[-1][:-3])
+        if os.path.exists(dst_file):
+            print('file', dst_file, 'already exist, assume already extracted')
+            return True
+        if not os.path.exists(folder):
+            print('create folder', folder)
+            os.makedirs(folder)
+        print('extract gz file to', dst_file)
+        with gzip.open(file, 'rb') as f_in, open(dst_file, 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
+        return True
     # already extracted
     if os.path.isdir(folder):
         p('folder', folder, 'already exist, assume already extracted')
@@ -94,6 +109,11 @@ def maybe_extract(file, folder, silent=False):
         return False
     if file.endswith('.zip'):
         zipfile.ZipFile(file=file, mode='r').extractall(folder)
+    elif file.endswith('.gz'):
+        dst_file = os.path.join(folder, file.split('/')[-1][:-3])
+        print('extract gz file to', dst_file)
+        with gzip.open(file, 'rb') as f_in, open(dst_file, 'wb') as f_out:
+            shutil.copyfileobj(f_in, f_out)
     elif file.endswith(('.tar.gz', '.tgz')):
         tarfile.open(name=file, mode='r:gz').extractall(folder)
     else:

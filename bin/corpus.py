@@ -4,6 +4,8 @@ import click
 from snowbot.corpus import CORPUS
 from snowbot.corpus.util import maybe_download, maybe_extract
 
+DATA_HOME = '../snowbot-data/'
+
 
 def corpus_must_exists(name):
     if name not in CORPUS:
@@ -20,7 +22,7 @@ def print_corpus():
 
 def create_corpus(name):
     corpus_must_exists(name)
-    corpus = CORPUS[name](home='data/' + name)
+    corpus = CORPUS[name](home=DATA_HOME + name)
     return corpus
 
 
@@ -32,13 +34,11 @@ def lst():
 @click.command('download', help='Download and extract corpus to ./data')
 @click.argument('name')
 def download(name):
-    corpus_must_exists(name)
-    extract_folder = 'data/' + name
-    if os.path.exists(extract_folder):
-        print('extracted data already exist in', extract_folder)
+    corpus = create_corpus(name)
+    if os.path.exists(corpus.home):
+        print('extracted data already exist in', corpus.home)
         return
-    corpus = CORPUS[name](home=extract_folder)
-    corpus.download_and_extract(extract_folder)
+    corpus.download_and_extract()
 
 
 @click.command('convert', help='Convert raw data to format like csv')
