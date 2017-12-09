@@ -47,9 +47,9 @@ class TwitterDataSet:
         print('total', len(questions), 'qa')
         q, a = os.path.join(self.home, q), os.path.join(self.home, a)
         with open(q, 'w') as f:
-            f.write('\n'.join(questions))
+            f.write(''.join(questions))
         with open(a, 'w') as f:
-            f.write('\n'.join(answers))
+            f.write(''.join(answers))
         return True
 
     # FIXME: the split, _split, remove_stupid, is_stupid are all copied from cornell dataset
