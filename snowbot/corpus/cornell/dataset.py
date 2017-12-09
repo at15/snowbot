@@ -64,7 +64,7 @@ class CornellDataSet:
                      m['cols'], array_col, escape_col)
         return True
 
-    def gen_qa(self):
+    def gen_qa(self, q='q.txt', a='a.txt'):
         conversations = get_conversations(os.path.join(self.home, 'movie_conversations.csv'))
         id2line = get_id2line(os.path.join(self.home, 'movie_lines.csv'))
         questions, answers, n_empty = [], [], 0
@@ -80,13 +80,23 @@ class CornellDataSet:
             return False
         print('total {} conversations, transformed to {} qa, skipped {} empty'.format(
             len(conversations), len(questions), n_empty))
-        q, a = os.path.join(self.home, 'q.txt'), os.path.join(self.home, 'a.txt')
+        q, a = os.path.join(self.home, q), os.path.join(self.home, a)
         print('save questions and answers to', q, a)
         with open(q, 'w') as f:
             f.write('\n'.join(questions))
         with open(a, 'w') as f:
             f.write('\n'.join(answers))
-        # FIXME: move to split
+        # TODO: allow split when gen qa?
+        return True
+
+    def split(self, q='q.txt', a='a.txt'):
+        with open(os.path.join(self.home, q), 'r') as f:
+            questions = f.read().splitlines()
+        with open(os.path.join(self.home, a), 'r') as f:
+            answers = f.read().splitlines()
+        return self._split(questions, answers)
+
+    def _split(self, questions, answers):
         d = train_test_split(questions, answers, 0.1)
         m = {
             'src-train.txt': 'train_enc',
@@ -95,11 +105,11 @@ class CornellDataSet:
             'tgt-val.txt': 'test_dec'
         }
         for dst, src in m.items():
-            with open(os.path.join(self.home, dst), 'w') as f:
+            p = os.path.join(self.home, dst)
+            print('write', src, 'to', p)
+            with open(p, 'w') as f:
                 f.write('\n'.join(d[src]))
         return True
-
-    # def split(self):
 
 
 def text2csv(src, dst, columns, array_col=-1, escape_col=-1):
