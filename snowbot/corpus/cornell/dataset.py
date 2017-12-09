@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import pandas as pd
 
@@ -82,6 +83,8 @@ class CornellDataSet:
             len(conversations), len(questions), n_empty))
         q, a = os.path.join(self.home, q), os.path.join(self.home, a)
         print('save questions and answers to', q, a)
+        count_stupid_lines(questions)
+        count_stupid_lines(answers)
         with open(q, 'w') as f:
             f.write('\n'.join(questions))
         with open(a, 'w') as f:
@@ -175,3 +178,36 @@ def get_id2line(movie_lines_csv):
     for line_id, line in zip(df['id'], df['utterance']):
         id2line[line_id] = line
     return id2line
+
+
+def count_stupid_lines(lines):
+    cleaner = re.compile('(<u>|</u>|\[|\])')
+    n_idk = 0
+    n_yeah = 0
+    n_no = 0
+    for raw in lines:
+        cleaned = cleaner.sub('', raw).lower()
+        if ('don\'t' in cleaned) and ('know' in cleaned):
+            n_idk += 1
+        if 'yeah' in cleaned:
+            n_yeah += 1
+        if 'no' in cleaned:
+            n_no += 1
+    print('stupid lines: n_idk', n_idk, 'n_yeah', n_yeah, 'n_no', n_no)
+
+
+def batch_tokenizer(lines):
+    cleaner = re.compile('(<u>|</u>|\[|\])')
+    vocab_count = {}
+    sentences_tokens = []
+    for l in lines:
+        # TODO: dealing w/ punctuation etc, and do we remove stop words, change he's -> he is etc.
+        cleaned = cleaner.sub('', l)
+        tokens = []
+        for token in cleaned.split():
+            token = token.lower().strip()
+            if token:
+                vocab_count[token] = vocab_count.get(token, 0) + 1
+                tokens.append(token)
+        sentences_tokens.append(tokens)
+    return sentences_tokens, vocab_count
