@@ -10,3 +10,5 @@ python -m sockeye.train --source ${D_HOME}src-train.txt \
                        --validation-target ${D_HOME}tgt-val.txt \
                        --rnn-num-hidden 256 \
                        --output ${M_HOME}
+
+# python -m sockeye.translate --models /home/at15/workspace/src/github.com/at15/snowbot/model/mxnet_sockeye
