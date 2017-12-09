@@ -18,6 +18,12 @@ def print_corpus():
         print(name, m.NAME, m.URL)
 
 
+def create_corpus(name):
+    corpus_must_exists(name)
+    corpus = CORPUS[name](home='data/' + name)
+    return corpus
+
+
 @click.command('list', help='Show known Corpus that can be downloaded')
 def lst():
     print_corpus()
@@ -38,17 +44,19 @@ def download(name):
 @click.command('convert', help='Convert raw data to format like csv')
 @click.argument('name')
 def convert(name):
-    corpus_must_exists(name)
-    corpus = CORPUS[name](home='data/' + name)
-    corpus.convert()
+    create_corpus(name).convert()
 
 
 @click.command('gen_qa', help='generate one turn dialog (QA)')
 @click.argument('name')
 def gen_qa(name):
-    corpus_must_exists(name)
-    corpus = CORPUS[name](home='data/' + name)
-    corpus.gen_qa()
+    create_corpus(name).gen_qa()
+
+
+@click.command('split', help='split qa into train and test set')
+@click.argument('name')
+def split(name):
+    create_corpus(name).split()
 
 
 # TODO: maybe_download does not handle nor return error
@@ -80,6 +88,7 @@ if __name__ == '__main__':
     cli.add_command(download)
     cli.add_command(convert)
     cli.add_command(gen_qa)
+    cli.add_command(split)
     cli.add_command(download_file)
     cli.add_command(extract_file)
     cli()

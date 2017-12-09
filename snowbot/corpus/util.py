@@ -42,6 +42,12 @@ def files_missing(folder, files):
     return missing
 
 
+def file_head(file, n_lines=10):
+    with open(file, errors='ignore') as f:
+        for i in range(n_lines):
+            print(i, f.readline())
+
+
 def maybe_download(url, download_dir, silent=False, progress=True):
     def p(*args):
         if not silent:

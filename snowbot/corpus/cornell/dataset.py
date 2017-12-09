@@ -1,4 +1,5 @@
 import os
+import re
 import shutil
 import pandas as pd
 
@@ -64,7 +65,7 @@ class CornellDataSet:
                      m['cols'], array_col, escape_col)
         return True
 
-    def gen_qa(self):
+    def gen_qa(self, q='q.txt', a='a.txt'):
         conversations = get_conversations(os.path.join(self.home, 'movie_conversations.csv'))
         id2line = get_id2line(os.path.join(self.home, 'movie_lines.csv'))
         questions, answers, n_empty = [], [], 0
@@ -80,13 +81,27 @@ class CornellDataSet:
             return False
         print('total {} conversations, transformed to {} qa, skipped {} empty'.format(
             len(conversations), len(questions), n_empty))
-        q, a = os.path.join(self.home, 'q.txt'), os.path.join(self.home, 'a.txt')
+        q, a = os.path.join(self.home, q), os.path.join(self.home, a)
         print('save questions and answers to', q, a)
+        count_stupid_lines(questions)
+        count_stupid_lines(answers)
         with open(q, 'w') as f:
             f.write('\n'.join(questions))
         with open(a, 'w') as f:
             f.write('\n'.join(answers))
-        # FIXME: move to split
+        # TODO: allow split when gen qa?
+        return True
+
+    def split(self, q='q.txt', a='a.txt', remove_stupid=True):
+        with open(os.path.join(self.home, q), 'r') as f:
+            questions = f.read().splitlines()
+        with open(os.path.join(self.home, a), 'r') as f:
+            answers = f.read().splitlines()
+        if remove_stupid:
+            questions, answers = remove_stupid_qa(questions, answers)
+        return self._split(questions, answers)
+
+    def _split(self, questions, answers):
         d = train_test_split(questions, answers, 0.1)
         m = {
             'src-train.txt': 'train_enc',
@@ -95,11 +110,11 @@ class CornellDataSet:
             'tgt-val.txt': 'test_dec'
         }
         for dst, src in m.items():
-            with open(os.path.join(self.home, dst), 'w') as f:
+            p = os.path.join(self.home, dst)
+            print('write', src, 'to', p)
+            with open(p, 'w') as f:
                 f.write('\n'.join(d[src]))
         return True
-
-    # def split(self):
 
 
 def text2csv(src, dst, columns, array_col=-1, escape_col=-1):
@@ -165,3 +180,64 @@ def get_id2line(movie_lines_csv):
     for line_id, line in zip(df['id'], df['utterance']):
         id2line[line_id] = line
     return id2line
+
+
+def count_stupid_lines(lines):
+    cleaner = re.compile('(<u>|</u>|\[|\])')
+    n_idk = 0
+    n_yeah = 0
+    n_no = 0
+    for raw in lines:
+        cleaned = cleaner.sub('', raw).lower()
+        if ('don\'t' in cleaned) and ('know' in cleaned):
+            n_idk += 1
+        if 'yeah' in cleaned:
+            n_yeah += 1
+        if 'no' in cleaned:
+            n_no += 1
+    print('stupid lines: n_idk', n_idk, 'n_yeah', n_yeah, 'n_no', n_no)
+
+
+def remove_stupid_qa(questions, answers):
+    assert len(questions) == len(answers)
+    cleaner = re.compile('(<u>|</u>|\[|\])')
+    q_clever = []
+    a_clever = []
+    n_stupid = 0
+    for i in range(len(questions)):
+        q = cleaner.sub('', questions[i]).lower()
+        a = cleaner.sub('', answers[i]).lower()
+        if is_stupid(q) or is_stupid(a):
+            n_stupid += 1
+            continue
+        q_clever.append(q)
+        a_clever.append(a)
+    assert len(q_clever) == len(a_clever)
+    print('n_stupid', n_stupid)
+    return q_clever, a_clever
+
+
+def is_stupid(line):
+    if len(line) < 15 and ('don\'t' in line) and ('know' in line):
+        return True
+    if len(line) < 5:
+        if ('yeah' in line) or ('yes' in line) or ('no' in line):
+            return True
+    return False
+
+
+def batch_tokenizer(lines):
+    cleaner = re.compile('(<u>|</u>|\[|\])')
+    vocab_count = {}
+    sentences_tokens = []
+    for l in lines:
+        # TODO: dealing w/ punctuation etc, and do we remove stop words, change he's -> he is etc.
+        cleaned = cleaner.sub('', l)
+        tokens = []
+        for token in cleaned.split():
+            token = token.lower().strip()
+            if token:
+                vocab_count[token] = vocab_count.get(token, 0) + 1
+                tokens.append(token)
+        sentences_tokens.append(tokens)
+    return sentences_tokens, vocab_count
