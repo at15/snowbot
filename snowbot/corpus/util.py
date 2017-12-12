@@ -1,5 +1,7 @@
 import os
+import json
 import math
+import re
 import requests
 import tarfile
 import zipfile
@@ -10,6 +12,121 @@ import click
 import numpy as np
 
 FOO = 'foo'
+
+PAD = '<pad>'
+UNKNOWN = '<unk>'
+START = '<s>'
+END = '</s>'
+
+
+class BatchBucketIterator:
+    def __init__(self, src_buckets, tgt_buckets, batch_size=64):
+        assert len(src_buckets) == len(tgt_buckets)
+        self.src_buckets = src_buckets
+        self.tgt_buckets = tgt_buckets
+        self.batch_size = batch_size
+        self.total = 0
+        for b in src_buckets:
+            self.total += len(b)
+        self.weights = [len(b) / self.total for b in src_buckets]
+        self.rand_bucket_id()
+
+    def next(self):
+        bucket_id = self.rand_bucket_id()
+        src_bucket = self.src_buckets[bucket_id]
+        tgt_bucket = self.tgt_buckets[bucket_id]
+        assert len(src_bucket) == len(tgt_bucket)
+        idxs = np.random.choice(len(src_bucket), self.batch_size, replace=False)
+        src_batch = []
+        tgt_batch = []
+        # TODO: might return sequence length and do padding?
+        for i in idxs:
+            src_batch.append(src_bucket[i])
+            tgt_batch.append(tgt_batch[i])
+        return src_batch, tgt_batch
+
+    def rand_bucket_id(self):
+        return np.random.choice(np.arange(len(self.src_buckets)), 1, p=self.weights)[0]
+
+
+def base_vocab_dict():
+    return {
+        PAD: 0,
+        UNKNOWN: 1,
+        START: 2,
+        END: 3
+    }
+
+
+def batch_tokenizer(lines, need_clean=False):
+    cleaner = re.compile('(<u>|</u>|\[|\])')
+    vocab_count = {}
+    sentences_tokens = []
+    for line in lines:
+        # TODO: dealing w/ punctuation etc, and do we remove stop words, change he's -> he is etc.
+        if need_clean:
+            line = cleaner.sub('', line)
+        tokens = []
+        for token in line.split():
+            token = token.lower().strip()
+            if token:
+                vocab_count[token] = vocab_count.get(token, 0) + 1
+                tokens.append(token)
+        sentences_tokens.append(tokens)
+    return sentences_tokens, vocab_count
+
+
+def gen_vocab(src, dst, max_words=50000):
+    with open(src, 'r') as f:
+        sentences_tokens, vocab_count = batch_tokenizer(f)
+    print('total words in', src, len(vocab_count))
+    # learned from https://github.com/chiphuyen/stanford-tensorflow-tutorials/blob/master/assignments/chatbot/data.py#L127
+    vocab_sorted = sorted(vocab_count, key=vocab_count.get, reverse=True)
+    vocab = base_vocab_dict()  # pad, unk, s, /s
+    offset = len(vocab)
+    total = min(max_words, len(vocab_count))
+    for i in range(total):
+        vocab[vocab_sorted[i]] = offset + i
+    with open(dst, 'w') as f:
+        json.dump(vocab, f)
+    print('wrote', total, 'words to', dst)
+
+
+def get_vocab(src):
+    with open(src, 'r') as f:
+        return json.load(f)
+
+
+def file2ids(src, vocab_json_file):
+    with open(src, 'r') as f, open(vocab_json_file, 'r') as fv:
+        return sentences2ids(f, json.load(fv))
+
+
+def sentences2ids(lines, vocab):
+    ids = []
+    for line in lines:
+        ids.append([vocab.get(w, vocab[UNKNOWN]) for w in line.split()])
+    return ids
+
+
+def bucket_ids(src_ids, tgt_ids):
+    lens = [len(ids) for ids in src_ids]
+    hist, bin_edges = np.histogram(lens, range=(0, 100), bins=10)
+    src_buckets = [[] for _ in bin_edges]
+    tgt_buckets = [[] for _ in bin_edges]
+    for ids, t_ids in zip(src_ids, tgt_ids):
+        length = len(ids)
+        for j in range(len(bin_edges) - 1, -1, -1):
+            if length >= bin_edges[j]:
+                src_buckets[j].append(ids)
+                tgt_buckets[j].append(t_ids)
+                break
+    t = 0
+    for b in src_buckets:
+        t += len(b)
+    # print(t, len(src_ids))
+    assert t == len(src_ids)
+    return src_buckets, tgt_buckets
 
 
 def convert_size(size_bytes):

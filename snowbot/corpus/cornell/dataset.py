@@ -3,7 +3,8 @@ import re
 import shutil
 import pandas as pd
 
-from snowbot.corpus.util import maybe_download, maybe_extract, files_exist, files_missing, train_test_split
+from snowbot.corpus.util import maybe_download, maybe_extract, files_exist, files_missing, train_test_split, \
+    gen_vocab, get_vocab, file2ids, bucket_ids
 
 _SEP = '+++$+++'
 
@@ -116,6 +117,51 @@ class CornellDataSet:
                 f.write('\n'.join(d[src]))
         return True
 
+    def gen_vocab(self):
+        # only use train data to generate vocab
+        gen_vocab(
+            os.path.join(self.home, 'src-train.txt'),
+            os.path.join(self.home, 'src-vocab.json')
+        )
+        gen_vocab(
+            os.path.join(self.home, 'tgt-train.txt'),
+            os.path.join(self.home, 'tgt-vocab.json')
+        )
+
+    def get_vocab(self):
+        return get_vocab(os.path.join(self.home, 'src-vocab.json')), get_vocab(
+            os.path.join(self.home, 'tgt-vocab.json'))
+
+    def get_buckets(self):
+        src_train_ids = file2ids(
+            os.path.join(self.home, 'src-train.txt'),
+            os.path.join(self.home, 'src-vocab.json')
+        )
+        tgt_train_ids = file2ids(
+            os.path.join(self.home, 'tgt-train.txt'),
+            os.path.join(self.home, 'tgt-vocab.json')
+        )
+        src_val_ids = file2ids(
+            os.path.join(self.home, 'src-val.txt'),
+            os.path.join(self.home, 'src-vocab.json')
+        )
+        tgt_val_ids = file2ids(
+            os.path.join(self.home, 'tgt-val.txt'),
+            os.path.join(self.home, 'tgt-vocab.json')
+        )
+        print('src_train_ids', len(src_train_ids))
+        print('tgt_train_ids', len(tgt_train_ids))
+        print('src_val_ids', len(src_val_ids))
+        print('tgt_val_ids', len(tgt_val_ids))
+        src_train_buckets, tgt_train_buckets = bucket_ids(src_train_ids, tgt_train_ids)
+        src_val_buckets, tgt_val_buckets = bucket_ids(src_val_ids, tgt_val_ids)
+        return {
+            'src_train_buckets': src_train_buckets,
+            'tgt_train_buckets': tgt_train_buckets,
+            'src_val_buckets': src_val_buckets,
+            'tgt_val_buckets': tgt_val_buckets
+        }
+
 
 def text2csv(src, dst, columns, array_col=-1, escape_col=-1):
     """Convert the original Cornell Movie Dialog corpus to csv because pandas can't load it directly
@@ -224,20 +270,3 @@ def is_stupid(line):
         if ('yeah' in line) or ('yes' in line) or ('no' in line):
             return True
     return False
-
-
-def batch_tokenizer(lines):
-    cleaner = re.compile('(<u>|</u>|\[|\])')
-    vocab_count = {}
-    sentences_tokens = []
-    for l in lines:
-        # TODO: dealing w/ punctuation etc, and do we remove stop words, change he's -> he is etc.
-        cleaned = cleaner.sub('', l)
-        tokens = []
-        for token in cleaned.split():
-            token = token.lower().strip()
-            if token:
-                vocab_count[token] = vocab_count.get(token, 0) + 1
-                tokens.append(token)
-        sentences_tokens.append(tokens)
-    return sentences_tokens, vocab_count
