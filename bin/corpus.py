@@ -59,6 +59,12 @@ def split(name):
     create_corpus(name).split()
 
 
+@click.command('gen_vocab', help='generate vocabulary')
+@click.argument('name')
+def gen_vocab(name):
+    create_corpus(name).gen_vocab()
+
+
 # TODO: maybe_download does not handle nor return error
 @click.command(name='download_file', help='Download file to folder, like wget/curl')
 @click.argument('url')
@@ -89,6 +95,7 @@ if __name__ == '__main__':
     cli.add_command(convert)
     cli.add_command(gen_qa)
     cli.add_command(split)
+    cli.add_command(gen_vocab)
     cli.add_command(download_file)
     cli.add_command(extract_file)
     cli()

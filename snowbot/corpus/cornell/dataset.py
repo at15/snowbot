@@ -1,9 +1,11 @@
 import os
 import re
 import shutil
+import json
 import pandas as pd
 
-from snowbot.corpus.util import maybe_download, maybe_extract, files_exist, files_missing, train_test_split
+from snowbot.corpus.util import maybe_download, maybe_extract, files_exist, files_missing, train_test_split, \
+    base_vocab_dict
 
 _SEP = '+++$+++'
 
@@ -116,6 +118,17 @@ class CornellDataSet:
                 f.write('\n'.join(d[src]))
         return True
 
+    def gen_vocab(self):
+        # only use train data to generate vocab
+        gen_vocab(
+            os.path.join(self.home, 'src-train.txt'),
+            os.path.join(self.home, 'src-vocab.json')
+        )
+        gen_vocab(
+            os.path.join(self.home, 'tgt-train.txt'),
+            os.path.join(self.home, 'tgt-vocab.json')
+        )
+
 
 def text2csv(src, dst, columns, array_col=-1, escape_col=-1):
     """Convert the original Cornell Movie Dialog corpus to csv because pandas can't load it directly
@@ -226,18 +239,35 @@ def is_stupid(line):
     return False
 
 
-def batch_tokenizer(lines):
+def batch_tokenizer(lines, need_clean=False):
     cleaner = re.compile('(<u>|</u>|\[|\])')
     vocab_count = {}
     sentences_tokens = []
-    for l in lines:
+    for line in lines:
         # TODO: dealing w/ punctuation etc, and do we remove stop words, change he's -> he is etc.
-        cleaned = cleaner.sub('', l)
+        if need_clean:
+            line = cleaner.sub('', line)
         tokens = []
-        for token in cleaned.split():
+        for token in line.split():
             token = token.lower().strip()
             if token:
                 vocab_count[token] = vocab_count.get(token, 0) + 1
                 tokens.append(token)
         sentences_tokens.append(tokens)
     return sentences_tokens, vocab_count
+
+
+def gen_vocab(src, dst, max_words=50000):
+    with open(src, 'r') as f:
+        sentences_tokens, vocab_count = batch_tokenizer(f)
+    print('total words in', src, len(vocab_count))
+    # learned from https://github.com/chiphuyen/stanford-tensorflow-tutorials/blob/master/assignments/chatbot/data.py#L127
+    vocab_sorted = sorted(vocab_count, key=vocab_count.get, reverse=True)
+    vocab = base_vocab_dict()  # pad, unk, s, /s
+    offset = len(vocab)
+    total = min(max_words, len(vocab_count))
+    for i in range(total):
+        vocab[vocab_sorted[i]] = offset + i
+    with open(dst, 'w') as f:
+        json.dump(vocab, f)
+    print('wrote', total, 'words to', dst)

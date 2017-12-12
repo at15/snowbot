@@ -11,6 +11,20 @@ import numpy as np
 
 FOO = 'foo'
 
+PAD = '<pad>'
+UNKNOWN = '<unk>'
+START = '<s>'
+END = '</s>'
+
+
+def base_vocab_dict():
+    return {
+        PAD: 0,
+        UNKNOWN: 1,
+        START: 2,
+        END: 3
+    }
+
 
 def convert_size(size_bytes):
     """
