@@ -4,7 +4,7 @@ import shutil
 import pandas as pd
 
 from snowbot.corpus.util import maybe_download, maybe_extract, files_exist, files_missing, train_test_split, \
-    gen_vocab, file2ids, bucket_ids
+    gen_vocab, get_vocab, file2ids, bucket_ids
 
 _SEP = '+++$+++'
 
@@ -127,6 +127,10 @@ class CornellDataSet:
             os.path.join(self.home, 'tgt-train.txt'),
             os.path.join(self.home, 'tgt-vocab.json')
         )
+
+    def get_vocab(self):
+        return get_vocab(os.path.join(self.home, 'src-vocab.json')), get_vocab(
+            os.path.join(self.home, 'tgt-vocab.json'))
 
     def get_buckets(self):
         src_train_ids = file2ids(

@@ -92,6 +92,11 @@ def gen_vocab(src, dst, max_words=50000):
     print('wrote', total, 'words to', dst)
 
 
+def get_vocab(src):
+    with open(src, 'r') as f:
+        return json.load(f)
+
+
 def file2ids(src, vocab_json_file):
     with open(src, 'r') as f, open(vocab_json_file, 'r') as fv:
         return sentences2ids(f, json.load(fv))
