@@ -1,16 +1,6 @@
 \documentclass{article}
 
-% if you need to pass options to natbib, use, e.g.:
-% \PassOptionsToPackage{numbers, compress}{natbib}
-% before loading nips_2017
-%
-% to avoid loading the natbib package, add option nonatbib:
-% \usepackage[nonatbib]{nips_2017}
-
 \usepackage[final,nonatbib]{nips_2017}
-
-% to compile a camera-ready version, add the [final] option, e.g.:
-% \usepackage[final]{nips_2017}
 
 \usepackage[utf8]{inputenc} % allow utf-8 input
 \usepackage[T1]{fontenc}    % use 8-bit T1 fonts
@@ -25,16 +15,6 @@
 \addbibresource{report.bib}
 
 \title{Snowbot: An empirical study of building chatbot using seq2seq with different framework}
-
-% The \author macro works with any number of authors. There are two
-% commands used to separate the names and addresses of multiple
-% authors: \And and \AND.
-%
-% Using \And between authors leaves it to LaTeX to determine where to
-% break the lines. Using \AND forces a line break at that point. So,
-% if LaTeX puts 3 of 4 authors names on the first line, and the last
-% on the second line, try using \AND instead of \And before the third
-% author name.
 
 \author{
 Pinglei Guo \\
@@ -51,31 +31,64 @@ Weiting Zhan \\
 }
 
 \begin{document}
-% \nipsfinalcopy is no longer used
 
 \maketitle
 
 \begin{abstract}
-    The abstract paragraph should be indented \nicefrac{1}{2}~inch
-    (3~picas) on both the left- and right-hand margins. Use 10~point
-    type, with a vertical spacing (leading) of 11~points. The word
-    \textbf{Abstract} must be centered, bold, and in point size 12. Two
-    line spaces precede the abstract. The abstract must be limited to
-    one paragraph.
+    Chatbot is a growing topic, we built a open domain generative chatbot using seq2seq model with different machine learning framework (Tensorflow, MXNet).
+    Our result show although seq2seq is a successful method in neural machine translation, use it solely on single turn chatbot yield pretty unsatisfactory result.
+    Also existing free dialog corpus lacks both quality and quantity.
+    Our conclusion is state of art technology can't build a useful open domain generative bot.
 \end{abstract}
 
-\section{Background}
+\section{Introduction}
+\label{sec:introduction}
 
-Chatbot is really popular
+\subsection{Chatbot}
+\label{subsec:chatbot}
 
-\subsection{Style}
+Chatbot can be generally divided into two types, open domain and close domain.
+Former can answer a wide range of questions (though the answer itself could be very general with syntax and semantic error),
+latter can solve particular problems from user, and user is not expecting a close domain bot to chat freely as well.
+Based on how response is generated, it can be divided to retrieval and generative,
+where answer is picked from clustered responses~\cite{kannan2016smart} or generated on the fly.
+In theory, open domain chatbot has more potential\footnote{if the domain is really open enough, generate random text might be the best algorithm},
+and is harder to build, in practice, most chatbot that gets work done is close domain.
 
-The file \verb+nips_2017.tex+ may be used as a ``shell'' for writing
-your paper. All you have to do is replace the author, title, abstract,
-and text of the paper with your own.
+At first (during proposal) we believe a close domain retrieval chatbot is the most easy one in the total four combinations based on a blog post~\cite{wildml},
+Then we realize that this is the most easy one in theory but the hardest one in practice, the other corner,
+open domain generative is actually easiest because it's end to end, there is no need for clustering, named entity recognition, knowledge base etc.
+And there is no hard metrics for evaluating a open domain chatbot~\cite{liu2016not}.
+Thus we decided to build a open domain generative chatbot in the limited time given.
 
-The formatting instructions contained in these style files are
-summarized in Sections~\ref{sec:model}.
+\subsection{Machine Learning Frameworks}
+\label{subsec:ml-frameworks}
+
+Machine learning framework is now the competing spot for tech giants, besides they are using ML excessively in their own products,
+they want developers to use their framework and run it on their cloud platform, (i.e. Tensorflow on Google Cloud, MXNet on AWS, CNTK on Azure).
+Although there were many open source frameworks started by individual and research organizations, most of them are deprecated
+in favor of those backed by companies (i.e. Theano vs. Tensorflow)\footnote{\url{https://groups.google.com/forum/\#!msg/theano-users/7Poq8BZutbY/rNCIfvAEAwAJ}}
+
+Tensorflow~\cite{abadi2016tensorflow} and MXNet~\cite{chen2015mxnet} are two widely used frameworks, while tensorflow is
+mostly declarative, mxnet allows more imperative programming style.
+A simple example is in order to debug the value of a matrix in tensorflow you need to write an op using \verb+tf.Print+ and put it inside compute graph,
+while in mxnet you can just use \verb+print+ like it's a normal python variable, though in fact it might resides on GPU or other machines.
+Declarative style is not very expressive, but make optimization on the framework side easier, mxnet chose to detect patterns
+and only optimize critical path to gain flexibility while retain performance.
+However, when it comes to most software engineers, the design and low-level API does not matter much,
+community support and a wide range of up to date model is more important, and tensorflow is the obvious winner.
+For researchers, mxnet might be a better choice, since it has thinner wrapper and stricter requirement.
+
+We chose to use two higher level seq2seq frameworks, sockeye (based on mxnet)\footnote{\url{https://github.com/awslabs/sockeye}}
+and OpenNMT-tf\footnote{\url{https://github.com/OpenNMT/OpenNMT-tf}} in the experiments,
+we did try to write a naive one based on newer seq2seq API in tensorflow, however since both sockeye and OpenNMT-tf use state of art models
+and yield unsatisfactory result, we abandoned it in the middle \footnote{\url{https://github.com/at15/snowbot/pull/23}}.
+
+The rest of the report is organized as following, Section~\ref{sec:model} describes the basic form of the seq2seq model we are using.
+Section~\ref{sec:dataset} shows how we process our dataset, and the problem in it.
+Implementation detail is listed in section~\ref{sec:implementation}.
+Our result is shown in section~\ref{sec:evaluation}.
+Section~\ref{sec:conclusion} concludes the report.
 
 \section{Model}
 \label{sec:model}
@@ -100,8 +113,11 @@ There is also a \verb+\paragraph+ command available, which sets the
 heading in bold, flush left, and inline with the text, with the
 heading followed by 1\,em of space.
 
-\section{Frameworks}
-\label{sec:frameworks}
+\section{Implementation}
+\label{sec:implementation}
+
+\subsection{Frameworks}
+\label{subsec:frameworks}
 
 These instructions apply to everyone.
 
@@ -162,6 +178,9 @@ This package was used to typeset Table~\ref{sample-table}.
 \section{Evaluation}
 \label{sec:evaluation}
 bla bla bla
+
+\section{Conclusion}
+\label{sec:conclusion}
 
 \printbibliography
 
