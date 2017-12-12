@@ -19,6 +19,36 @@ START = '<s>'
 END = '</s>'
 
 
+class BatchBucketIterator:
+    def __init__(self, src_buckets, tgt_buckets, batch_size=64):
+        assert len(src_buckets) == len(tgt_buckets)
+        self.src_buckets = src_buckets
+        self.tgt_buckets = tgt_buckets
+        self.batch_size = batch_size
+        self.total = 0
+        for b in src_buckets:
+            self.total += len(b)
+        self.weights = [len(b) / self.total for b in src_buckets]
+        self.rand_bucket_id()
+
+    def next(self):
+        bucket_id = self.rand_bucket_id()
+        src_bucket = self.src_buckets[bucket_id]
+        tgt_bucket = self.tgt_buckets[bucket_id]
+        assert len(src_bucket) == len(tgt_bucket)
+        idxs = np.random.choice(len(src_bucket), self.batch_size, replace=False)
+        src_batch = []
+        tgt_batch = []
+        # TODO: might return sequence length and do padding?
+        for i in idxs:
+            src_batch.append(src_bucket[i])
+            tgt_batch.append(tgt_batch[i])
+        return src_batch, tgt_batch
+
+    def rand_bucket_id(self):
+        return np.random.choice(np.arange(len(self.src_buckets)), 1, p=self.weights)[0]
+
+
 def base_vocab_dict():
     return {
         PAD: 0,
