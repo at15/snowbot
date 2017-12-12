@@ -4,7 +4,7 @@ import shutil
 import pandas as pd
 
 from snowbot.corpus.util import maybe_download, maybe_extract, files_exist, files_missing, train_test_split, \
-    gen_vocab
+    gen_vocab, file2ids
 
 _SEP = '+++$+++'
 
@@ -128,6 +128,28 @@ class CornellDataSet:
             os.path.join(self.home, 'tgt-vocab.json')
         )
 
+    def get_buckets(self):
+        src_train_ids = file2ids(
+            os.path.join(self.home, 'src-train.txt'),
+            os.path.join(self.home, 'src-vocab.json')
+        )
+        tgt_train_ids = file2ids(
+            os.path.join(self.home, 'tgt-train.txt'),
+            os.path.join(self.home, 'tgt-vocab.json')
+        )
+        src_val_ids = file2ids(
+            os.path.join(self.home, 'src-val.txt'),
+            os.path.join(self.home, 'src-vocab.json')
+        )
+        tgt_val_ids = file2ids(
+            os.path.join(self.home, 'tgt-val.txt'),
+            os.path.join(self.home, 'tgt-vocab.json')
+        )
+        print('src_train_ids', len(src_train_ids))
+        print('tgt_train_ids', len(tgt_train_ids))
+        print('src_val_ids', len(src_val_ids))
+        print('tgt_val_ids', len(tgt_val_ids))
+        
 
 def text2csv(src, dst, columns, array_col=-1, escape_col=-1):
     """Convert the original Cornell Movie Dialog corpus to csv because pandas can't load it directly

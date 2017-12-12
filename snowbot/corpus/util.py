@@ -74,6 +74,26 @@ def sentences2ids(lines, vocab):
     return ids
 
 
+def bucket_ids(src_ids, tgt_ids):
+    lens = [len(ids) for ids in src_ids]
+    hist, bin_edges = np.histogram(lens, range=(0, 100), bins=10)
+    src_buckets = [[] for _ in bin_edges]
+    tgt_buckets = [[] for _ in bin_edges]
+    for ids, t_ids in zip(src_ids, tgt_ids):
+        length = len(ids)
+        for j in range(len(bin_edges) - 1, -1, -1):
+            if length >= bin_edges[j]:
+                src_buckets[j].append(ids)
+                tgt_buckets[j].append(t_ids)
+                break
+    t = 0
+    for b in src_buckets:
+        t += len(b)
+    # print(t, len(src_ids))
+    assert t == len(src_ids)
+    return src_buckets, tgt_buckets
+
+
 def convert_size(size_bytes):
     """
     convert size in bytes to human readable string, i.e. 1024 -> 1KB
