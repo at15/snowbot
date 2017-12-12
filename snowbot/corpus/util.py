@@ -1,5 +1,7 @@
 import os
+import json
 import math
+import re
 import requests
 import tarfile
 import zipfile
@@ -24,6 +26,52 @@ def base_vocab_dict():
         START: 2,
         END: 3
     }
+
+
+def batch_tokenizer(lines, need_clean=False):
+    cleaner = re.compile('(<u>|</u>|\[|\])')
+    vocab_count = {}
+    sentences_tokens = []
+    for line in lines:
+        # TODO: dealing w/ punctuation etc, and do we remove stop words, change he's -> he is etc.
+        if need_clean:
+            line = cleaner.sub('', line)
+        tokens = []
+        for token in line.split():
+            token = token.lower().strip()
+            if token:
+                vocab_count[token] = vocab_count.get(token, 0) + 1
+                tokens.append(token)
+        sentences_tokens.append(tokens)
+    return sentences_tokens, vocab_count
+
+
+def gen_vocab(src, dst, max_words=50000):
+    with open(src, 'r') as f:
+        sentences_tokens, vocab_count = batch_tokenizer(f)
+    print('total words in', src, len(vocab_count))
+    # learned from https://github.com/chiphuyen/stanford-tensorflow-tutorials/blob/master/assignments/chatbot/data.py#L127
+    vocab_sorted = sorted(vocab_count, key=vocab_count.get, reverse=True)
+    vocab = base_vocab_dict()  # pad, unk, s, /s
+    offset = len(vocab)
+    total = min(max_words, len(vocab_count))
+    for i in range(total):
+        vocab[vocab_sorted[i]] = offset + i
+    with open(dst, 'w') as f:
+        json.dump(vocab, f)
+    print('wrote', total, 'words to', dst)
+
+
+def file2ids(src, vocab_json_file):
+    with open(src, 'r') as f, open(vocab_json_file, 'r') as fv:
+        return sentences2ids(f, json.load(fv))
+
+
+def sentences2ids(lines, vocab):
+    ids = []
+    for line in lines:
+        ids.append([vocab.get(w, vocab[UNKNOWN]) for w in line.split()])
+    return ids
 
 
 def convert_size(size_bytes):
