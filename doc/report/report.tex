@@ -17,6 +17,10 @@
 \usepackage{graphicx}
 \graphicspath{ {images/} }
 
+% https://tex.stackexchange.com/questions/376420/include-chinese-characters-into-article-in-xelatex
+\usepackage{fontspec}
+\newfontfamily\cjkfont{Noto Sans CJK SC}
+
 \title{Snowbot: An empirical study of building chatbot using seq2seq with different framework}
 
 \author{
@@ -121,8 +125,25 @@ RNN + LSTM can be used for sequence classification, text generation, translation
     \end{tabular}
 \end{table}
 
-For many to many RNN + LSTM (seq2seq), simply swap the input and output data, you get a different application for free,
-which is exactly what we did, we use neural machine translation framework to build our chatbot.
+For many to many in RNN + LSTM (seq2seq), simply swap the input and output data, you get a different application for free
+(Table \ref{table:seq2seq-app}).
+So we can use neural machine translation framework directly to build our chatbot.
+
+\begin{table}[h]
+    \caption{Input and Output of different seq2seq application}
+    \label{table:seq2seq-app}
+    \centering
+    \begin{tabular}{lllll}
+        \toprule
+        Type & Train input & Train output & Test input & Test output \\
+        \midrule
+        text generation & You are my foe & You are my foe & You are & my <unk>\\
+        translation & {\cjkfont 你好} & Hello & {\cjkfont 你大爷} & Your uncle \\
+        single turn QA & Any idea & I don't know & How's the weather & I don't know \\
+        multi turn QA & Got it?; No; Why? & I don't know & Hi; Hey; What's up? & I don't know \\
+        \bottomrule
+    \end{tabular}
+\end{table}
 
 \begin{figure}[h]
     \centering
