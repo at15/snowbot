@@ -12,4 +12,8 @@ python -m sockeye.train --source ${D_HOME}src-train.txt \
                        --rnn-num-hidden 256 \
                        --output ${M_HOME}
 
+
+#python -m sockeye.translate --models /home/at15/workspace/src/github.com/at15/snowbot-model/mxnet_sockeye_1207_01
+#python -m sockeye.translate --models /home/at15/workspace/src/github.com/at15/snowbot-model/mxnet_sockeye_1207_02
+#python -m sockeye.translate --models /home/at15/workspace/src/github.com/at15/snowbot-model/mxnet_sockeye_1208_01
 # python -m sockeye.translate --models /home/at15/workspace/src/github.com/at15/snowbot-model/mxnet_sockeye_twitter_1209_01

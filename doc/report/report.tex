@@ -21,7 +21,9 @@
 \usepackage{fontspec}
 \newfontfamily\cjkfont{Noto Sans CJK SC}
 
-\title{Snowbot: An empirical study of building chatbot using seq2seq with different framework}
+\usepackage{listings}
+
+\title{Snowbot: An empirical study of building chatbot using seq2seq model with different machine learning framework}
 
 \author{
 Pinglei Guo \\
@@ -45,7 +47,7 @@ Weiting Zhan \\
     Chatbot is a growing topic, we built a open domain generative chatbot using seq2seq model with different machine learning framework (Tensorflow, MXNet).
     Our result show although seq2seq is a successful method in neural machine translation, use it solely on single turn chatbot yield pretty unsatisfactory result.
     Also existing free dialog corpus lacks both quality and quantity.
-    Our conclusion is state of art technology can't build a useful open domain generative bot.
+    Our conclusion it's hard to build a useful open domain generative bot using state of art technology.
 \end{abstract}
 
 \section{Introduction}
@@ -102,11 +104,12 @@ Section~\ref{sec:conclusion} concludes the report.
 
 We use seq2seq model, which is widely used in neural machine translation~\cite{sutskever2014sequence}
 and can be applied to single turn dialog system (QA) as well.
-Its basic structure is a recurrent neural network (RNN) and treat sentence as a sequence of words, and feed one word at each step.
-The cell used in RNN is LSTM (long term short memory) to learn implicit relation ship between words
-from data without explicit pre-processing.
+Its basic structure is two recurrent neural networks (RNN) as shown in figure~\ref{fig:seq2seq}.
+The cell used in RNN is LSTM (long term short memory),
+so we can learn implicit relation ship between words from data without explicit pre-processing.
 seq2seq is one of many variants of RNN + LSTM. Based on the domain and length of input,
-RNN + LSTM can be used for sequence classification, text generation, translation, dialog system etc. as shown in table~\ref{table:RNN+LSTM}
+RNN + LSTM can be used for sequence classification, text generation, translation, dialog system etc.
+as shown in table~\ref{table:RNN+LSTM}
 
 \begin{table}[h]
     \caption{Variants of RNN + LSTM}
@@ -126,7 +129,7 @@ RNN + LSTM can be used for sequence classification, text generation, translation
 \end{table}
 
 For many to many in RNN + LSTM (seq2seq), simply swap the input and output data, you get a different application for free
-(Table \ref{table:seq2seq-app}).
+(Table~\ref{table:seq2seq-app}) \footnote{not real data, for demonstration only}.
 So we can use neural machine translation framework directly to build our chatbot.
 
 \begin{table}[h]
@@ -148,22 +151,62 @@ So we can use neural machine translation framework directly to build our chatbot
 \begin{figure}[h]
     \centering
     \includegraphics[width=\columnwidth]{seq2seq-simple}
-    \caption{Sample figure caption.}
+    \caption{Sequence to Sequence model for single turn Dialog}
+    \label{fig:seq2seq}
 \end{figure}
 
-% TODO: graph, and example text for test and train
-% TODO: difference between test and train
+From figure~\ref{fig:seq2seq} we can see the main idea of seq2seq is to encode input words sequence into a vector,
+and decode this vector until reaches max step or EOS (\verb+</s>+).
+On the encoder side, the output and hidden state are all discarded except the last hidden state,
+which certainly lose some important information, and leads to optimization like attention~\cite{luong2015effective}.
+
+On the decoder side, train and test (infer) is different.
+The first word is \verb+<s>+ instead of real word in both case, but in training, the word feed into each step is from
+original data while in testing, the word feed into each step is based on the output of previous step.
+The output from projection layer (after softmax) is a vector indicating probability of each word in vocabulary.
+In training, we calculate loss use cross entropy, note that due to the length of sequences in a mini batch may not be the same,
+we use padding (\verb+<PAD>+) to form a matrix and we need to mask those padded part out when calculating loss.
+In test, we can pick the word with max probability as word for this step, this is the greedy way,
+but we may not pick the overall best sentence if we consider each word independently.
+A better way is to use Beam Search, which is keep top-K words in each step, and take the path of top-1 as the final output.
+
+In sockeye and OpenNMT-tf, both attention and beam search are enabled by default, also there can be more than one layer LSTM
+or combination of cells (bi-direction), in original NMT paper they say feed input in reverse order increase performance~\cite{sutskever2014sequence},
+and with bi-direction, a sentence is feed into encoder in two directions.
 
 \section{Dataset}
 \label{sec:dataset}
 
-Cornell Movie Dialog Corpus~\cite{data:cornell}
+We use Cornell Movie Dialog Corpus~\cite{data:cornell} because it is used by many publication and blog posts for single turn dialog system.
+It contains 83097 conversations, and can be converted to 221282 single turn QA.
 
-\paragraph{Paragraphs}
+\subsection{Handling I don't know}
+\label{subsec:idk}
 
-There is also a \verb+\paragraph+ command available, which sets the
-heading in bold, flush left, and inline with the text, with the
-heading followed by 1\,em of space.
+Our first run using sockeye shows \verb+I don't know+ is the most popular response,
+which leads to a very simple questions. How many \verb+I don't know+ do we have in training data,
+does the bot learn to know what it really knows, or there are just too many \verb+I don't know+ in training data.
+
+Q: hi \\
+A: I don't want to talk to you. \\
+Q: do you know \\
+A: I don't know. \\
+Q: you know what \\
+A: I don't know. \\
+Q: oh say something other than I don't know \\
+A: What are you talking about? \\
+Q: so this is all you got \\
+A: I don't want to talk about it. \\
+Q: do you like cat \\
+A: I don't know. \\
+Q: what do you know \\
+A: I don't know. \\
+Q: where can I find the park \\
+A: I don't know. \\
+
+So we add counting and removing \verb+I don't know+ when processing text.
+The result in 221282 QA there are 5114 response is just \verb+I don't know+, which is 2.3\%., excluding those with \verb+I don't know+ as prefix.
+Considering the corpus is from movie with varies backgrounds, 2.3\% is a relative high percentile.
 
 \section{Implementation}
 \label{sec:implementation}
