@@ -141,7 +141,7 @@ So we can use neural machine translation framework directly to build our chatbot
         Type & Train input & Train output & Test input & Test output \\
         \midrule
         text generation & You are my foe & You are my foe & You are & my <unk>\\
-        translation & {\cjkfont 你好} & Hello & {\cjkfont 你大爷} & Your uncle \\
+        translation & {\cjkfont 你好} & Hello & {\cjkfont 吃了么} & Good morning \\
         single turn QA & Any idea & I don't know & How's the weather & I don't know \\
         multi turn QA & Got it?; No; Why? & I don't know & Hi; Hey; What's up? & I don't know \\
         \bottomrule
@@ -181,17 +181,16 @@ and with bi-direction, a sentence is feed into encoder in two directions.
 \label{subsec:idk}
 
 We start with Cornell Movie Dialog Corpus~\cite{data:cornell} because it is used by many publication and blog posts for single turn dialog system.
-It contains 83097 conversations, and can be converted to 221282 single turn QA.
+It contains 83097 conversations, and can be converted to 221282 single turn QA, total file size is 22MB.
 
 However, our first run using sockeye shows \verb+I don't know+ is the most popular response (Table \ref{table:cornell-idk} left),
 which leads to a very simple questions. How many \verb+I don't know+ do we have in training data,
 does the bot learn to know what it really knows, or there are just too many \verb+I don't know+ in training data.
 
 So we add counting and removing \verb+I don't know+ when processing text.
-The result in 221282 QA there are 5114 response is just \verb+I don't know+, which is 2.3\%., excluding those with \verb+I don't know+ as prefix.
+There are 5114 response is just \verb+I don't know+, which is 2.3\%., excluding those with \verb+I don't know+ as prefix.
 Considering the corpus is from movie with varies backgrounds, 2.3\% is a relative high percentile.
-After removing I don't know, the response not that general (Table \ref{table:cornell-idk} right), although most time the
-response is just a very general question.
+After removing I don't know, the responses (Table \ref{table:cornell-idk} right) become very general questions like \verb+what do you mean+.
 
 \begin{table}[h]
     \caption{Cornell corpus before and after filtering out I don't know}
@@ -239,67 +238,28 @@ A: i don't want to know what you want. \newline
 \end{tabular}
 \end{table}
 
+\subsection{Twitter Chat log}
+\label{subsec:twitter}
+
+Since Cornell Movie Dialog Corpus is quite dramatic, we decided to try more daily style dialog corpus.
+The data is from Marsan-Ma/chart\_corpus\footnote{\url{https://github.com/Marsan-Ma/chat\_corpus}}, he wrote
+a crawler to scrape twitter.\footnote{As for now, using twitter API requires enterprise plan and share data on github has legal issues}
+It contains 377265 QA and total size is 51MB, and there is just 6 pure \verb+I don't know+.
+
+On interesting to note is the data contains emoji, and we didn't remove it when pre-processing.
+We could just keep all the ASCII, but we thought it would be interesting to see if emoji would show up in generated response, and they did, as show in Table~\ref{table:twitter}
+
+% TODO: pick the dialog, currently, only thank you will show the the star
+
 \section{Implementation}
 \label{sec:implementation}
 
-\subsection{Frameworks}
-\label{subsec:frameworks}
+a la la implementation
 
-These instructions apply to everyone.
+\subsection{Data Pipeline}
+\label{subsec:data-pipeline}
 
-\subsection{Figures}
-
-All artwork must be neat, clean, and legible. Lines should be dark
-enough for purposes of reproduction. The figure number and caption
-always appear after the figure. Place one line space before the figure
-caption and one line space after the figure. The figure caption should
-be lower case (except for first word and proper nouns); figures are
-numbered consecutively.
-
-You may use color figures. However, it is best for the figure
-captions and the paper body to be legible if the paper is printed in
-either black/white or in color.
-\begin{figure}[h]
-    \centering
-    \fbox{\rule[-.5cm]{0cm}{4cm} \rule[-.5cm]{4cm}{0cm}}
-    \caption{Sample figure caption.}
-\end{figure}
-
-\subsection{Tables}
-
-All tables must be centered, neat, clean and legible. The table
-number and title always appear before the table. See
-Table~\ref{sample-table}.
-
-Place one line space before the table title, one line space after the
-table title, and one line space after the table. The table title must
-be lower case (except for first word and proper nouns); tables are
-numbered consecutively.
-
-Note that publication-quality tables \emph{do not contain vertical
-rules.} We strongly suggest the use of the \verb+booktabs+ package,
-which allows for typesetting high-quality, professional tables:
-\begin{center}
-    \url{https://www.ctan.org/pkg/booktabs}
-\end{center}
-This package was used to typeset Table~\ref{sample-table}.
-
-\begin{table}[t]
-    \caption{Sample table title}
-    \label{sample-table}
-    \centering
-    \begin{tabular}{lll}
-        \toprule
-        \multicolumn{2}{c}{Part}                   \\
-        \cmidrule{1-2}
-        Name & Description & Size ($\mu$m) \\
-        \midrule
-        Dendrite & Input terminal & $\sim$100     \\
-        Axon & Output terminal & $\sim$10      \\
-        Soma & Cell body & up to $10^6$  \\
-        \bottomrule
-    \end{tabular}
-\end{table}
+framework independent data pipeline
 
 \section{Evaluation}
 \label{sec:evaluation}
