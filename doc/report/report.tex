@@ -73,10 +73,29 @@ Thus we decided to build a open domain generative chatbot in the limited time gi
 \subsection{Machine Learning Frameworks}
 \label{subsec:ml-frameworks}
 
-Machine learning framework is now the competing spot for tech giants, besides they are using ML excessively in their own products,
+Machine learning framework is now the competing spot for tech giants (Table~\ref{table:ml-frameworks}), besides they are using ML excessively in their own products,
 they want developers to use their framework and run it on their cloud platform, (i.e. Tensorflow on Google Cloud, MXNet on AWS, CNTK on Azure).
 Although there were many open source frameworks started by individual and research organizations, most of them are deprecated
 in favor of those backed by companies (i.e. Theano vs. Tensorflow)\footnote{\url{https://groups.google.com/forum/\#!msg/theano-users/7Poq8BZutbY/rNCIfvAEAwAJ}}
+
+\begin{table}[h]
+    \caption{Popular Machine learning Frameworks}
+    \label{table:ml-frameworks}
+    \centering
+    \begin{tabular}{llll}
+        \toprule
+        Name & Star & Company & First Release\\
+        \midrule
+        \href{https://github.com/tensorflow/tensorflow}{Tensorflow} & 81697 & Google & 2015-11-08 \\
+        \href{https://github.com/keras-team/keras}{Keras} & 22872 & N/A & 2015-01-13 \\
+        \href{https://github.com/BVLC/caffe}{Caffe} & 21739 & N/A & 2014-03-19 \\
+        \href{https://github.com/Microsoft/CNTK}{CNTK} & 13366 & Microsoft & 2016-01-22 \\
+        \href{https://github.com/apache/incubator-mxnet}{MXNet} & 12392 & Amazon & 2015-12-09 \\
+        \href{https://github.com/pytorch/pytorch}{PyTorch} & 10142 & Facebook & 2016-08-31 \\
+        \href{https://github.com/torch/torch7}{Torch} & 7537 & N/A & 2015? \\
+        \bottomrule
+    \end{tabular}
+\end{table}
 
 Tensorflow~\cite{abadi2016tensorflow} and MXNet~\cite{chen2015mxnet} are two widely used frameworks, while tensorflow is
 mostly declarative, mxnet allows more imperative programming style.
@@ -190,7 +209,7 @@ does the bot learn to know what it really knows, or there are just too many \ver
 So we add counting and removing \verb+I don't know+ when processing text.
 There are 5114 response is just \verb+I don't know+, which is 2.3\%., excluding those with \verb+I don't know+ as prefix.
 Considering the corpus is from movie with varies backgrounds, 2.3\% is a relative high percentile.
-After removing I don't know, the responses (Table \ref{table:cornell-idk} right) become very general questions like \verb+what do you mean+.
+After removing I don't know, the responses (Table~\ref{table:cornell-idk} right) become very general questions like \verb+what do you mean+.
 
 \begin{table}[h]
     \caption{Cornell corpus before and after filtering out I don't know}
@@ -243,8 +262,8 @@ A: i don't want to know what you want. \newline
 
 Since Cornell Movie Dialog Corpus is quite dramatic, we decided to try more daily style dialog corpus.
 The data is from Marsan-Ma/chart\_corpus\footnote{\url{https://github.com/Marsan-Ma/chat\_corpus}}, he wrote
-a crawler to scrape twitter.\footnote{As for now, using twitter API requires enterprise plan and share data on github has legal issues}
-It contains 377265 QA and total size is 51MB, and there is just 6 pure \verb+I don't know+.
+a crawler to scrape twitter.\footnote{As for now, using Twitter API requires enterprise plan and share data on github has legal issues}
+It contains 377265 QA and there is just 6 pure \verb+I don't know+, total size is 51MB.
 
 On interesting to note is the data contains emoji, and we didn't remove it when pre-processing.
 We could just keep all the ASCII, but we thought it would be interesting to see if emoji would show up in generated response, and they did, as show in Table~\ref{table:twitter}
@@ -254,12 +273,56 @@ We could just keep all the ASCII, but we thought it would be interesting to see 
 \section{Implementation}
 \label{sec:implementation}
 
-a la la implementation
-
 \subsection{Data Pipeline}
 \label{subsec:data-pipeline}
 
-framework independent data pipeline
+Because we decide to use different frameworks's with different dataset, a lot work is done to provide a unified interface
+for processing the data and feed into the graph.
+Each framework has their own dataset wrapper and special data format (i.e. \verb+TfRecord+).
+Instead of writing ad-hoc code to adapt to different code and dataset,
+we generalize this procedure in package \verb+snowbot.corpus+\footnote{\url{https://github.com/at15/snowbot/tree/master/snowbot/corpus}}.
+So adding a new dataset just need to inherit the class and implement some dataset specific logic like handling invalid input.
+It has a command line interface as shown in figure~\ref{fig:data-pipeline}.
+
+% NOTE: we should have used text instead of image, but it's hard to put
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\columnwidth]{data-pipeline}
+    \caption{Data Pipeline command line interface}
+    \label{fig:data-pipeline}
+\end{figure}
+
+\subsection{Seq2Seq Frameworks}
+\label{subsec:seq2seq-frameworks}
+
+In our experiments we use existing seq2seq frameworks, there are plenty of them, as shown in Table~\ref{table:seq2seq-frameworks}.
+We chose OpenNMT-tf and sockeye because we are interested in the rumor that MXNet is more efficient on using GPU memory than Tensorflow.
+
+\begin{table}[h]
+    \caption{Seq2Seq Frameworks}
+    \label{table:seq2seq-frameworks}
+    \centering
+    \begin{tabular}{llll}
+        \toprule
+        Name & Framework & GitHub & Star \\
+        \midrule
+        OpenNMT-py & PyTorch & \href{https://github.com/OpenNMT/OpenNMT-py}{OpenNMT/OpenNMT-py} & 773 \\
+        OpenNMT & Torch & \href{https://github.com/OpenNMT/OpenNMT}{OpenNMT/OpenNMT} & 1461 \\
+        OpenNMT-tf & Tensorflow & \href{https://github.com/OpenNMT/OpenNMT-tf}{OpenNMT/OpenNMT-tf} & 145 \\
+        nmt & Tensorflow & \href{https://github.com/tensorflow/nmt}{tensorflow/nmt} & 2094 \\
+        seq2seq & Tensorflow & \href{https://github.com/google/seq2seq}{google/seq2seq} & 3019 \\
+        tensor2tensor & Tensorflow & \href{https://github.com/tensorflow/tensor2tensor}{tensorflow/tensor2tensor} & 2975 \\
+        Sockeye & MXNet & \href{https://github.com/awslabs/sockeye}{awslabs/sockeye} & 290 \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+
+\subsubsection{Sockeye (MXNet)}
+\label{subsubsec:sockeye}
+
+\subsubsection{OpenNMT-tf (Tensorflow)}
+\label{subsubsec:opennmt-tf}
 
 \section{Evaluation}
 \label{sec:evaluation}
