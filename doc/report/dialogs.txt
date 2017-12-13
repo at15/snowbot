@@ -1,3 +1,4 @@
+# initial version
 # python -m sockeye.translate --models /home/at15/workspace/src/github.com/at15/snowbot-model/mxnet_sockeye_1207_01
 @start
 hi
@@ -16,4 +17,25 @@ what do you know
 I don't know.
 where can I find the park
 I don't know.
+@end
+
+# no more i don't know
+#python -m sockeye.translate --models /home/at15/workspace/src/github.com/at15/snowbot-model/mxnet_sockeye_1208_01
+@start
+hi
+hi.
+do you know
+i don't think so.
+you know what
+what do you want?
+oh say something other than i don't know
+what do you want me to do?
+so this is all you got
+i don't know what it is.
+do you like cat
+what do you mean?
+what do you know
+what do you mean?
+where can i find the park
+i don't want to know what you want.
 @end

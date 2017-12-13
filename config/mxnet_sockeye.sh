@@ -13,7 +13,10 @@ python -m sockeye.train --source ${D_HOME}src-train.txt \
                        --output ${M_HOME}
 
 
+# initial version
 #python -m sockeye.translate --models /home/at15/workspace/src/github.com/at15/snowbot-model/mxnet_sockeye_1207_01
+# initial version, but run until no improvement
 #python -m sockeye.translate --models /home/at15/workspace/src/github.com/at15/snowbot-model/mxnet_sockeye_1207_02
+# no more i don't know
 #python -m sockeye.translate --models /home/at15/workspace/src/github.com/at15/snowbot-model/mxnet_sockeye_1208_01
 # python -m sockeye.translate --models /home/at15/workspace/src/github.com/at15/snowbot-model/mxnet_sockeye_twitter_1209_01

@@ -177,36 +177,67 @@ and with bi-direction, a sentence is feed into encoder in two directions.
 \section{Dataset}
 \label{sec:dataset}
 
-We use Cornell Movie Dialog Corpus~\cite{data:cornell} because it is used by many publication and blog posts for single turn dialog system.
-It contains 83097 conversations, and can be converted to 221282 single turn QA.
-
-\subsection{Handling I don't know}
+\subsection{Handling I don't know in Cornell Movie Dialog Corpus}
 \label{subsec:idk}
 
-Our first run using sockeye shows \verb+I don't know+ is the most popular response,
+We start with Cornell Movie Dialog Corpus~\cite{data:cornell} because it is used by many publication and blog posts for single turn dialog system.
+It contains 83097 conversations, and can be converted to 221282 single turn QA.
+
+However, our first run using sockeye shows \verb+I don't know+ is the most popular response (Table \ref{table:cornell-idk} left),
 which leads to a very simple questions. How many \verb+I don't know+ do we have in training data,
 does the bot learn to know what it really knows, or there are just too many \verb+I don't know+ in training data.
-
-Q: hi \\
-A: I don't want to talk to you. \\
-Q: do you know \\
-A: I don't know. \\
-Q: you know what \\
-A: I don't know. \\
-Q: oh say something other than I don't know \\
-A: What are you talking about? \\
-Q: so this is all you got \\
-A: I don't want to talk about it. \\
-Q: do you like cat \\
-A: I don't know. \\
-Q: what do you know \\
-A: I don't know. \\
-Q: where can I find the park \\
-A: I don't know. \\
 
 So we add counting and removing \verb+I don't know+ when processing text.
 The result in 221282 QA there are 5114 response is just \verb+I don't know+, which is 2.3\%., excluding those with \verb+I don't know+ as prefix.
 Considering the corpus is from movie with varies backgrounds, 2.3\% is a relative high percentile.
+After removing I don't know, the response not that general (Table \ref{table:cornell-idk} right), although most time the
+response is just a very general question.
+
+\begin{table}[h]
+    \caption{Cornell corpus before and after filtering out I don't know}
+    \label{table:cornell-idk}
+    \centering
+\begin{tabular}{p{70mm}|p{70mm}}
+  \toprule
+  Raw text without processing & After filtering out I don't know \\
+  \hline
+  Q: hi \newline
+A: I don't want to talk to you. \newline
+Q: do you know \newline
+A: I don't know. \newline
+Q: you know what \newline
+A: I don't know. \newline
+Q: oh say something other than I don't know \newline
+A: What are you talking about? \newline
+Q: so this is all you got \newline
+A: I don't want to talk about it. \newline
+Q: do you like cat \newline
+A: I don't know. \newline
+Q: what do you know \newline
+A: I don't know. \newline
+Q: where can I find the park \newline
+A: I don't know. \newline
+  &
+Q: hi \newline
+A: hi. \newline
+Q: do you know \newline
+A: i don't think so. \newline
+Q: you know what \newline
+A: what do you want? \newline
+Q: oh say something other than i don't know \newline
+A: what do you want me to do? \newline
+Q: so this is all you got \newline
+A: i don't know what it is. \newline
+Q: do you like cat \newline
+A: what do you mean? \newline
+Q: what do you know \newline
+A: what do you mean? \newline
+Q: where can i find the park \newline
+A: i don't want to know what you want. \newline
+  \\
+  \bottomrule
+\end{tabular}
+\end{table}
 
 \section{Implementation}
 \label{sec:implementation}
