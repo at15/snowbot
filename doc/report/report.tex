@@ -179,6 +179,8 @@ and decode this vector until reaches max step or EOS (\verb+</s>+).
 On the encoder side, the output and hidden state are all discarded except the last hidden state,
 which certainly lose some important information, and leads to optimization like attention~\cite{luong2015effective}.
 
+% TODO: add graph
+
 On the decoder side, train and test (infer) is different.
 The first word is \verb+<s>+ instead of real word in both case, but in training, the word feed into each step is from
 original data while in testing, the word feed into each step is based on the output of previous step.
@@ -292,6 +294,12 @@ It has a command line interface as shown in figure~\ref{fig:data-pipeline}.
     \label{fig:data-pipeline}
 \end{figure}
 
+\subsection{Text processing}
+\label{subsec:text-processing}
+
+% TODO
+TODO: embedding, special token etc.
+
 \subsection{Seq2Seq Frameworks}
 \label{subsec:seq2seq-frameworks}
 
@@ -317,16 +325,31 @@ We chose OpenNMT-tf and sockeye because we are interested in the rumor that MXNe
     \end{tabular}
 \end{table}
 
+Although most of them are built for neural machine translation, we can use them for chatbot directly by swapping the input
+and output file as show in Table~\ref{table:seq2seq-app}.
 
 \subsubsection{Sockeye (MXNet)}
 \label{subsubsec:sockeye}
 
+Sockeye only requires two text file, it was expecting two different language, but we replace it with questions and answers in same language.
+It will generate the vocabulary on the fly, it simply splits sentence into tokens by space, no conversion like remove special token is performed.
+(But we did the pre-processing and joined the processed text with space.) It supports attention and beam search.
+
 \subsubsection{OpenNMT-tf (Tensorflow)}
 \label{subsubsec:opennmt-tf}
 
+OpenNMT-tf use a YAML file as config, which is similar across all OpenNMT implementation.
+It also supports attention and beam search, but its default configuration is not very practical.
+It asks you to set train step instead of epoch, and seems don't support when there is no more improvement after k epoch.
+
 \section{Evaluation}
 \label{sec:evaluation}
-bla bla bla
+
+We run our experiment on a normal desktop with a NVIDIA GTX 1080 8GB.
+We planned to use AWS, but it took three days to increase quota (initial is 0),
+by the time we can run a p2 instance, we already have most result we need.
+Normally it took 1h (around 7 epoch) for sockeye to reach the best result, it will continue 3 epoch before stop training.
+For OpenNMT-tf, the default config would take 83.7h to finish training (1000000 steps), so we force it to stop after 1h.
 
 \section{Conclusion}
 \label{sec:conclusion}

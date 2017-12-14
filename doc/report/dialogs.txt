@@ -39,3 +39,78 @@ what do you mean?
 where can i find the park
 i don't want to know what you want.
 @end
+
+# hi
+# bye
+# goodbye
+# i love you
+# what is love
+# excuse me
+# thank you
+# why
+# what do you think about him
+# what do you think about her
+
+#python -m sockeye.translate --models /home/at15/workspace/src/github.com/at15/snowbot-model/mxnet_sockeye_twitter_1209_01
+@start
+hi
+thank you!
+bye
+i love you so much for your <unk>
+goodbye
+i love you so much
+i love you
+i love you so much
+what is love
+i love you so much
+excuse me
+i love you so much
+thank you
+thank you so much ❤️
+why
+i don't know what i said.
+can you see that
+i don't know what i was in the <unk>
+fuck you
+i was just thinking about it but i was just thinking about it but i was just thinking about it
+a
+<unk>
+what do you think about him
+i think he is a <unk>
+what do you think about her
+i think she is a <unk>
+excuse me
+i love you so much
+why
+i don't know what i said.
+where can i find the park
+i think we can go to the <unk>
+where can i find love
+i love you <unk>
+he is your girlfriend
+i don't know what i was talking about
+like it
+i don't know what it is.
+what do you think about it
+i don't know what it is.
+just tell me
+i love you so much
+never
+<unk>
+i don't like it
+i don't know how to do it
+i like it
+i don't know how to do it
+how much is it
+i think it was a <unk>
+it is amazing
+thank you so much for the <unk>
+better not do this
+i don't know what it is.
+find it in the cabin
+<unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk> <unk>
+like this
+this is the best part of the <unk>
+what is the reason for this
+this is the best thing i've ever seen in the <unk>
+@end
