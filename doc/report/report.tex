@@ -62,12 +62,14 @@ latter can solve particular problems from user, and user is not expecting a clos
 Based on how response is generated, it can be divided to retrieval and generative,
 where answer is picked from clustered responses~\cite{kannan2016smart} or generated on the fly.
 In theory, open domain chatbot has more potential\footnote{if the domain is really open enough, generate random text might be the best algorithm},
-and is harder to build, in practice, most chatbot that gets work done is close domain.
+and is harder to build, in practice, most chatbot that gets work done is close domain,
+even those that seems to be open domain (Siri, Cortana) are not implemented end to end, heuristic rules, entity recognition, knowledge base,
+clustered response are inject into multiple stages in the pipeline to produce good result.
 
 At first (during proposal) we believe a close domain retrieval chatbot is the most easy one in the total four combinations based on a blog post~\cite{wildml},
 Then we realize that this is the most easy one in theory but the hardest one in practice, the other corner,
-open domain generative is actually easiest because it's end to end, there is no need for clustering, named entity recognition, knowledge base etc.
-And there is no hard metrics for evaluating a open domain chatbot~\cite{liu2016not}.
+open domain generative is actually easiest because it's end to end, just two RNN is enough.
+% And there is no hard metrics for evaluating a open domain chatbot~\cite{liu2016not}.
 Thus we decided to build a open domain generative chatbot in the limited time given.
 
 \subsection{Machine Learning Frameworks}
@@ -116,7 +118,7 @@ The rest of the report is organized as following, Section~\ref{sec:model} descri
 Section~\ref{sec:dataset} shows how we process our dataset, and the problem in it.
 Implementation detail is listed in section~\ref{sec:implementation}.
 Our result is shown in section~\ref{sec:evaluation}.
-Section~\ref{sec:conclusion} concludes the report.
+Section~\ref{sec:conclusion} concludes the report and \textbf{workload distribution}.
 
 \section{Model}
 \label{sec:model}
@@ -236,7 +238,7 @@ A: I don't know. \newline
 Q: what do you know \newline
 A: I don't know. \newline
 Q: where can I find the park \newline
-A: I don't know. \newline
+A: I don't know.
   &
 Q: hi \newline
 A: hi. \newline
@@ -253,13 +255,13 @@ A: what do you mean? \newline
 Q: what do you know \newline
 A: what do you mean? \newline
 Q: where can i find the park \newline
-A: i don't want to know what you want. \newline
+A: i don't want to know what you want.
   \\
   \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{Twitter Chat log}
+\subsection{Twitter Chat log with emoji}
 \label{subsec:twitter}
 
 Since Cornell Movie Dialog Corpus is quite dramatic, we decided to try more daily style dialog corpus.
@@ -267,10 +269,32 @@ The data is from Marsan-Ma/chart\_corpus\footnote{\url{https://github.com/Marsan
 a crawler to scrape twitter.\footnote{As for now, using Twitter API requires enterprise plan and share data on github has legal issues}
 It contains 377265 QA and there is just 6 pure \verb+I don't know+, total size is 51MB.
 
-On interesting to note is the data contains emoji, and we didn't remove it when pre-processing.
-We could just keep all the ASCII, but we thought it would be interesting to see if emoji would show up in generated response, and they did, as show in Table~\ref{table:twitter}
+One interesting to note is the data contains emoji \footnote{we use :heart: instead of real emoji in report due to there is no such font for latex},
+and we didn't remove it when pre-processing.
+We could just keep all the ASCII, but we thought it would be interesting to see if emoji would show up in generated response,
+and they did, as show in Table~\ref{table:cornell-twitter}
 
-% TODO: pick the dialog, currently, only thank you will show the the star
+\begin{table}[h]
+    \caption{Cornell Movie Dialog vs Twitter Chat}
+    \label{table:cornell-twitter}
+    \centering
+\begin{tabular}{p{70mm}|p{70mm}}
+  \toprule
+  Cornell Movie Dialog Corpus & Twitter Chat\\
+  \hline
+  Q: thank you \newline
+A: I don't want to see you. \newline
+Q: Thank you \newline
+A: yeah.
+  &
+Q: thank you \newline
+A: thank you so much :heart:️. \newline
+Q: Thank you \newline
+A: thank you so much for the <unk>
+  \\
+  \bottomrule
+\end{tabular}
+\end{table}
 
 \section{Implementation}
 \label{sec:implementation}
@@ -285,6 +309,8 @@ Instead of writing ad-hoc code to adapt to different code and dataset,
 we generalize this procedure in package \verb+snowbot.corpus+\footnote{\url{https://github.com/at15/snowbot/tree/master/snowbot/corpus}}.
 So adding a new dataset just need to inherit the class and implement some dataset specific logic like handling invalid input.
 It has a command line interface as shown in figure~\ref{fig:data-pipeline}.
+The total implementation of the data pipeline has around 1,000 lines of python code,
+it's not very efficient now, we plan to use C extension and allow short path between phases instead of storing intermediate result on disk.
 
 % NOTE: we should have used text instead of image, but it's hard to put
 \begin{figure}[h]
@@ -297,8 +323,21 @@ It has a command line interface as shown in figure~\ref{fig:data-pipeline}.
 \subsection{Text processing}
 \label{subsec:text-processing}
 
-% TODO
-TODO: embedding, special token etc.
+In contrast with previous assignments, we removed a lot of text processing when building the chatbot,
+just simply split word by space and ignore invalid codec that can crash the program.
+For instance, stop words are not removed, because in a normal chat, we are expecting words like \verb+I+, \verb+a+.
+Also we find converting words to lower case does not make much difference (see section~\ref{sec:evaluation}) because
+they will have similar word vector given enough data and training time.
+Special characters are also not removed, so certain dataset can keep their own feature, like emoji is widely used in twitter
+(see section~\ref{subsec:twitter}).
+
+However, we added an extra step of removing high frequency general dialogs from corpus like \verb+I don't know+,
+which gives use a better result, but the alternatives are still quite general.
+Another addition formatting dataset into a standard format of question and answer.
+All of the text processing are in our data pipeline tool (see section~\ref{subsec:data-pipeline}) with around 600 lines of python code.
+
+%\subsection{Tensorflow Seq2Seq API}
+%\label{subsec:tf-seq2seq}
 
 \subsection{Seq2Seq Frameworks}
 \label{subsec:seq2seq-frameworks}
@@ -340,23 +379,136 @@ It will generate the vocabulary on the fly, it simply splits sentence into token
 
 OpenNMT-tf use a YAML file as config, which is similar across all OpenNMT implementation.
 It also supports attention and beam search, but its default configuration is not very practical.
-It asks you to set train step instead of epoch, and seems don't support when there is no more improvement after k epoch.
+It asks you to set train step instead of epoch, and seems don't support auto stop when there is no more improvement after k epoch.
 
 \section{Evaluation}
 \label{sec:evaluation}
 
 We run our experiment on a normal desktop with a NVIDIA GTX 1080 8GB.
-We planned to use AWS, but it took three days to increase quota (initial is 0),
-by the time we can run a p2 instance, we already have most result we need.
+We use 2 layer LSTM with 256 hidden units, (took around 5GB RAM and has 66157396 parameters), vocabulary size is 50000 (covers 90\%+).
+Attention is used and beam size is set to 5 for beam search (there is no randomness injected, so the response is quite deterministic).
 Normally it took 1h (around 7 epoch) for sockeye to reach the best result, it will continue 3 epoch before stop training.
 For OpenNMT-tf, the default config would take 83.7h to finish training (1000000 steps), so we force it to stop after 1h.
+
+One thing to note is there is no hard metrics for evaluating a chatbot~\cite{liu2016not}.
+We use perplexity like NMT, to represent how close we approach when training.
+For Cornell dataset, the best perplexity in training on evaluation set is 90, for Twitter dataset, the best perplexity is 135.
+However, the most popular way for testing a dialog system now is to employ human to give judgement (i.e. is this a bot or a human),
+which is quite expensive, so we skipped it and only tested it among team members.
+
+\subsection{Word embedding}
+\label{subsec:word-embedding}
+
+We didn't initialize our embedding matrix with pre-trained value from word2vec or GloVe, and let they be part of the parameters and trained along.
+Although our data is not large, but it's big enough to capture the similarity of words, so even without careful text processing (section ~\ref{subsec:text-processing}),
+our eventual result won't suffer much from that,
+because words like \verb+love+ and \verb+Love+ does not have very large distance as shown in figure~\ref{fig:embedding-love}
+\footnote{you can also use tensorboard for mxnet based application \url{https://github.com/dmlc/tensorboard}}.
+We did normalize text in some runs, but since it's hard to evaluate automatically,
+we find little difference for the limited input we have tried.
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=\columnwidth]{embedding-love}
+    \caption{Word embedding with random initialization}
+    \label{fig:embedding-love}
+\end{figure}
+
+\subsection{Entity recognition}
+\label{subsec:entity-recognition}
+
+Although we didn't implement named entity recognition (which is a core part of industrial strength chatbot).
+Some dialog can shows our naive end to end framework can capture simple entity like refer to different person \verb+he, she, I+
+(Table~\ref{table:entity-recognition}).
+However the grammar can be very wrong i.e. \verb+I don't what I was+,
+it's likely to be caused by \verb+I was+ appers much more than \verb+I am+ in training data.
+
+\begin{table}[h]
+    \caption{Simple entity recognition}
+    \label{table:entity-recognition}
+    \centering
+\begin{tabular}{p{65mm}|p{75mm}}
+  \toprule
+  Cornell Movie Dialog & Twitter Chat \\
+  \hline
+Q: what do you think about him \newline
+A: what do you mean? \newline
+Q: where is he \newline
+A: i don't know what he is. \newline
+Q: where is she \newline
+A: she said she was a <unk> \newline
+Q: she said what? \newline
+A: she said she was a <unk> \newline
+Q: he said what? \newline
+A: he said he was a <unk> \newline
+Q: i said what? \newline
+A: what do you want?
+  &
+Q: where is he \newline
+A: i think he is a <unk> \newline
+Q: where is she \newline
+A: i don't know what she was in the <unk> \newline
+Q: where is him \newline
+A: i think he is a <unk> \newline
+Q: where is her \newline
+A: i don't know what she was in the <unk> \newline
+Q: where am i \newline
+A: i don't know what i was in the <unk> \newline
+Q: what is he doing \newline
+A: i think he is a <unk> \newline
+Q: what is she doing \newline
+A: i think she is a <unk> \newline
+Q: what am i doing \newline
+A: i don't know what you want to do with the <unk>
+  \\
+  \bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Generic Response}
+\label{subsec:generic-response}
+
+There are a lot generic responses in the chats we have listed (Table~\ref{table:cornell-idk}, ~\ref{table:cornell-twitter}, ~\ref{table:entity-recognition}).
+It's a common problem if look at all the chatbots using seq2seq only.
+Attention is said to be able to improve this, but we didn't see much difference when attention is applied.
+We believe this can't be solved easily if we stick to a simple end to end framework like seq2seq,
+extra knowledge must be introduced, like named entity recognition.
+When training data is relative large, the model will fit to the most common dialogs, which falls to \verb+I don't know+,
+\verb+what do you mean+.
+Some people chose to train the already trained model with very small dataset to generate more vivid dialog,
+which we believe is just a more advanced trick of using hard coded rules to shrink the domain of response and is not a general solution.
+
+Also, we believe the generic response also have a lot to do with our dataset.
+The Cornell Movie Dialog Corpus we are using is quite dramatic, it's script for movie after all.
+It would be better to have corpus that covers people's daily life.
+Ubuntu Corpus~\cite{lowe2015ubuntu} might be a good choice, it is very technical but more closer to daily life.
+Twitter no longer allows people to scrap and share data, people doing that has legal issues.
+There are people sharing Reddit data (1TB) but we haven't tried that yet.
+
 
 \section{Conclusion}
 \label{sec:conclusion}
 
+We built an open domain generative chatbot using seq2seq model with Tensorflow and MXNet respectively.
+The bot is able to capture simple entity, but most responses are pretty generic.
+End to end model using seq2seq is easy to implement, but using it alone can't yield good result.
+In the future we plan to try entity recognition and larger dataset with distributed training,
+and might switch to retrieval based chatbot.
+
+The workload in the project is distributed as following
+
+\begin{itemize}
+    \item Pinglei Guo: Data Pipeline, Part of Tensorflow of MXNet based implementation
+    \item Yusi Xiang: Twitter Data, Part of MXNet based implementation
+    \item Yunzheng Zhang: Cornell Data, Part of Tensorflow based implementation
+    \item Weiting Zhan: Twitter Data, Test, Report
+\end{itemize}
+
+The authors like to thank Tianyi Luo and Haiyu Yang for advice on the seq2seq model and organizing python codebase.
+
 \printbibliography
 
-\section*{Appendix: A}
-\label{sec:appendix:a}
+%\section*{Appendix: A}
+%\label{sec:appendix:a}
 
 \end{document}
