@@ -2,7 +2,7 @@
 
 <h1 align="center">
 	<br>
-	<img width="400" src="https://raw.githubusercontent.com/at15/snowbot/snowbot.png" alt="snowbot">
+	<img width="400" src="https://raw.githubusercontent.com/at15/snowbot/master/snowbot.png" alt="snowbot">
 	<br>
 	<br>
 	<br>
